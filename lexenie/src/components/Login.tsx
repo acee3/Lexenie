@@ -6,8 +6,10 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({  }) => {
   return (
-    <div>
+    <div className="content-center">
+      <p className="border border-black rounded-lg hover:border-dotted center text-4xl">
       Login
+      </p>
     </div>
   );
 };

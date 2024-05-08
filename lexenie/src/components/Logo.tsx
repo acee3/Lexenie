@@ -2,7 +2,7 @@ import React from 'react';
 
 const Logo = () => {
   return (
-    <div>
+    <div className="font-bold text-8xl ">
       Lexenie
     </div>
   );
