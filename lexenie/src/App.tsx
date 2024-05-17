@@ -19,10 +19,15 @@ function App() {
     setCurMessage(e.target.value);
   };
 
+  const get_date = () => {
+    let date = new Date();
+    return date.toISOString().slice(0, 19).replace('T', ' ');
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Message Sent:", curMessage);
-    setMessages([...messages, {id: messages.length, text: curMessage, isSender: true}]);
+    setMessages([...messages, { id: messages.length, text: curMessage, isSender: true }]);
     setCurMessage('');
     setInputDisabled(true);
 
@@ -37,7 +42,7 @@ function App() {
     <div className="">
       <Header loggedIn={false} />
       <MessagesContainer messages={messages} />
-      <MessageInput message={curMessage} onInputChange={handleInputChange} onSubmit={handleSubmit} disabled={inputDisabled}/>
+      <MessageInput message={curMessage} onInputChange={handleInputChange} onSubmit={handleSubmit} disabled={inputDisabled} />
     </div>
   );
 }
