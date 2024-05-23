@@ -1,5 +1,7 @@
 import express, { Request, Response } from 'express';
 import mysql, { PoolOptions, RowDataPacket } from 'mysql2';
+import { Language, Message } from './lib/types';
+import { BackendError, BotResponseError, QueryError, UnknownError } from './lib/errors';
 require('dotenv').config();
 const { Configuration, OpenAIApi } = require('openai');
 const cors = require('cors');
@@ -32,10 +34,12 @@ const openai = new OpenAIApi(configuration);
 app.post('/retrieve-conversation', async (req: Request, res: Response) => {
     const conversationId = req.body.conversationId;
     try {
-        const [conversation] = await promisePool.query<RowDataPacket[]>(`SELECT * FROM ${message_table_name} WHERE conversation_id = ? ORDER BY created_at ASC`, [conversationId]);
-        res.status(200).send(conversation);
+        const prevMessages = await query<Message>(`SELECT * FROM ${message_table_name} WHERE conversation_id = ? ORDER BY created_at ASC`, [conversationId]);
+        res.status(200).send(prevMessages);
     } catch (error) {
-        res.status(400).send("Error retrieving conversation");
+        if (error instanceof BackendError)
+            res.status(error.status).send(error.message);
+        res.status(500).send("Unknown error with retrieving conversation");
     }
 });
 
@@ -45,12 +49,14 @@ app.post('/send-message', async (req, res) => {
     const messageText = req.body.messaggeText;
     const createdAt = req.body.createdAt;
     try {
-        const [prevMessages] = await promisePool.query(``);
-        const [languageRows] = await promisePool.query(``);
-        const language = languageRows.length > 0 ? languageRows
-        const responseText = await botResponse();
+        const prevMessages = await query<Message>(`SELECT * FROM ${message_table_name} WHERE conversation_id = ? ORDER BY created_at ASC`, [conversationId]);
+        const languageRows = await query<Language>(`SELECT language FROM Conversations WHERE conversation_id = ?`, [conversationId]);
+        const language = languageRows.length > 0 ? languageRows[0].language : "English";
+        const responseText = await botResponse(language, prevMessages, messageText);
     } catch (error) {
-        res.status(400).send("Error sending message");
+        if (error instanceof BackendError)
+            res.status(error.status).send(error.message);
+        res.status(500).send("Unknown error with sending message");
     }
 });
 
@@ -59,7 +65,7 @@ app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 
-async function botResponse(language: string, prevMessages: Message[], message: string) {
+async function botResponse(language: string, prevMessages: Message[], message: string): Promise<string> {
     const messages = [{ role: "system", content: `You are a friend conversing in ${language}` }];
     prevMessages.forEach(messageObject => {
         const role = messageObject['user_id'] == 1 ? "assistant" : "user";
@@ -73,6 +79,17 @@ async function botResponse(language: string, prevMessages: Message[], message: s
         });
         return completion.choices[0].message.content;
     } catch (error) {
-        return error;
+        if (!(error instanceof Error)) throw new UnknownError();
+        throw new BotResponseError(error.message);
+    }
+}
+
+async function query<T extends RowDataPacket>(sql: string, args: string[]): Promise<T[]> {
+    try {
+        const [rows] = await promisePool.query<T[]>(sql, args);
+        return rows;
+    } catch (error) {
+        if (!(error instanceof Error)) throw new UnknownError();
+        throw new QueryError(error.message);
     }
 }
