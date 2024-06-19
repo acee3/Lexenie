@@ -7,6 +7,14 @@ abstract class BackendError extends Error {
   }
 }
 
+class SetupError extends BackendError {
+  constructor(message: string, status: number = 500) {
+    super(message);
+    this.name = "SetupError";
+    this.status = status;
+  }
+}
+
 class BotResponseError extends BackendError {
   constructor(message: string, status: number = 500) {
     super(message);
@@ -23,6 +31,14 @@ class QueryError extends BackendError {
   }
 }
 
+class WebsocketNotConnectError extends BackendError {
+  constructor(message: string, status: number = 500) {
+    super(message);
+    this.name = "WebsocketNotConnectError";
+    this.status = status;
+  }
+}
+
 class UnknownError extends BackendError {
   constructor(status: number = 500) {
     super("An unknown error occurred.");
@@ -31,4 +47,4 @@ class UnknownError extends BackendError {
   }
 }
 
-export { BackendError, BotResponseError, QueryError, UnknownError };
+export { SetupError, BackendError, BotResponseError, QueryError, WebsocketNotConnectError, UnknownError };

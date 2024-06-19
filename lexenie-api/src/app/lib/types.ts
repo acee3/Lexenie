@@ -1,6 +1,7 @@
 import { RowDataPacket } from "mysql2";
 
-interface Message extends RowDataPacket {
+// DATABASE TYPES
+interface MessageData extends RowDataPacket {
   message_id: number;
   conversation_id: number;
   user_id: number;
@@ -8,8 +9,12 @@ interface Message extends RowDataPacket {
   created_at: Date;
 }
 
-interface Language extends RowDataPacket {
+interface LanguageData extends RowDataPacket {
   language: string;
 }
 
-export { Message, Language };
+interface CountData extends RowDataPacket {
+  count: number;
+}
+
+export { MessageData, LanguageData, CountData };
