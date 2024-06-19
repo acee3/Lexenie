@@ -40,8 +40,8 @@ class WebsocketNotConnectError extends BackendError {
 }
 
 class UnknownError extends BackendError {
-  constructor(status: number = 500) {
-    super("An unknown error occurred.");
+  constructor(message: string = "An unknown error occurred.", status: number = 500) {
+    super(message);
     this.name = "UnknownError";
     this.status = status;
   }

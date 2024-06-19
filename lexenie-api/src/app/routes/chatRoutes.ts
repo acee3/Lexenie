@@ -1,10 +1,18 @@
 import { Router } from 'express';
 import { createConversation, retrieveConversation, sendMessage } from '../controllers/chatController.js';
+import { io } from '../index.js'
 
-const chatRouter = Router();
+export default async function getChatRouter() {
+  const chatRouter = Router();
 
-chatRouter.post('/create-conversation', createConversation);
-chatRouter.post('/retrieve-conversation', retrieveConversation);
-chatRouter.post('/send-message', sendMessage);
+  chatRouter.post('/createConversation', createConversation);
+  chatRouter.post('/retrieveConversation', retrieveConversation);
 
-export default chatRouter;
+  io.on("connection", (socket) => {
+    socket.on("sendMessage", (input) => {
+      sendMessage(socket, socket.data.userId, input.conversationId, input.messageText);
+    });
+  });
+
+  return chatRouter;
+}
