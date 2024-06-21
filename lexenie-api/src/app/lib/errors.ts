@@ -39,6 +39,14 @@ class WebsocketNotConnectError extends BackendError {
   }
 }
 
+class AudioChunkSentBeforeStartRecordingError extends BackendError {
+  constructor(message: string, status: number = 500) {
+    super(message);
+    this.name = "AudioChunkSentBeforeStartRecordingError";
+    this.status = status;
+  }
+}
+
 class UnknownError extends BackendError {
   constructor(message: string = "An unknown error occurred.", status: number = 500) {
     super(message);
@@ -47,4 +55,4 @@ class UnknownError extends BackendError {
   }
 }
 
-export { SetupError, BackendError, BotResponseError, QueryError, WebsocketNotConnectError, UnknownError };
+export { SetupError, BackendError, BotResponseError, QueryError, WebsocketNotConnectError, AudioChunkSentBeforeStartRecordingError, UnknownError };

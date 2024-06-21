@@ -7,7 +7,6 @@ dotenv.config();
 export default class Database {
   private static promisePool: Pool;
   public CONVERSATION_TABLE_NAME: string;
-  public AUDIO_FILE_TABLE_NAME: string;
   public MESSAGE_TABLE_NAME: string;
   public USER_TABLE_NAME: string;
   public BOT_USER_ID: string;
@@ -38,11 +37,10 @@ export default class Database {
     // console.log(rows);
     // console.log(fields);
 
-    if (process.env.CONVERSATION_TABLE_NAME == undefined || process.env.AUDIO_FILE_TABLE_NAME == undefined || process.env.MESSAGE_TABLE_NAME == undefined || process.env.USER_TABLE_NAME == undefined || process.env.BOT_USER_ID == undefined)
+    if (process.env.CONVERSATION_TABLE_NAME == undefined || process.env.MESSAGE_TABLE_NAME == undefined || process.env.USER_TABLE_NAME == undefined || process.env.BOT_USER_ID == undefined)
       throw new SetupError("Missing environment variables");
 
     this.CONVERSATION_TABLE_NAME = process.env.CONVERSATION_TABLE_NAME;
-    this.AUDIO_FILE_TABLE_NAME = process.env.AUDIO_FILE_TABLE_NAME;
     this.MESSAGE_TABLE_NAME = process.env.MESSAGE_TABLE_NAME;
     this.USER_TABLE_NAME = process.env.USER_TABLE_NAME;
     

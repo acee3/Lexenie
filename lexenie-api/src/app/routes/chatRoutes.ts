@@ -1,5 +1,5 @@
-import { Router } from 'express';
-import { createConversation, retrieveConversation, sendMessage } from '../controllers/chatController.js';
+import Router from 'express-promise-router';
+import { createConversation, retrieveConversation, stopRecordingSendMessage } from '../controllers/chatController.js';
 import { io } from '../index.js'
 
 export default async function getChatRouter() {
@@ -9,9 +9,7 @@ export default async function getChatRouter() {
   chatRouter.post('/retrieveConversation', retrieveConversation);
 
   io.on("connection", (socket) => {
-    socket.on("sendMessage", (input) => {
-      sendMessage(socket, socket.data.userId, input.conversationId, input.messageText);
-    });
+    stopRecordingSendMessage(socket);
   });
 
   return chatRouter;

@@ -1,7 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import http from 'http';
 import { WebsocketNotConnectError } from '../lib/errors.js';
-import { InputMessage, Error, OutputMessage } from '../lib/types.js';
+import { Error, InputChunk, OutputMessage, StartRecordingData, WaveChunks } from '../lib/types.js';
 
 interface ServerToClientEvents {
   responseMessage: (response: OutputMessage) => void;
@@ -9,7 +9,9 @@ interface ServerToClientEvents {
 }
 
 interface ClientToServerEvents {
-  sendMessage: (input: InputMessage) => void;
+  startRecording: (input: StartRecordingData) => void;
+  receiveAudioChunk: (input: InputChunk) => void;
+  sendMessage: (input: number) => void;
 }
 
 interface InterServerEvents {
@@ -18,6 +20,7 @@ interface InterServerEvents {
 
 interface SocketData {
   userId: number;
+  audioChunksMap: Map<number, WaveChunks>;
 }
 
 export { ServerToClientEvents, ClientToServerEvents, InterServerEvents, SocketData }

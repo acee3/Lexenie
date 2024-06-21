@@ -1,9 +1,37 @@
 import { RowDataPacket } from "mysql2";
 
+type Language = "English" 
+              | "Spanish" 
+              | "French" 
+              | "German" 
+              | "Italian"
+              | "Mandarin"
+              | "Cantonese"
+              | "Japanese";
+
+export { Language };
+
+
 // CLIENT TYPES
-interface InputMessage {
+interface WaveData {
+  sampleRate: number;
+  numberChannels: number;
+  bytesPerSample: number;
+}
+
+interface StartRecordingData {
   conversationId: number;
-  messageText: string;
+  waveData: WaveData;
+}
+
+interface WaveChunks {
+  waveData: WaveData;
+  audioChunks: string[];
+}
+
+interface InputChunk {
+  conversationId: number;
+  audioChunk: string;
 }
 
 interface OutputMessage {
@@ -13,7 +41,7 @@ interface OutputMessage {
   createdAt: Date;
 }
 
-export { InputMessage, OutputMessage };
+export { WaveData, StartRecordingData, WaveChunks, InputChunk, OutputMessage };
 
 
 // DATABASE TYPES
@@ -23,10 +51,11 @@ interface MessageData extends RowDataPacket {
   user_id: number;
   message_text: string;
   created_at: Date;
+  audio_file_path?: string;
 }
 
 interface LanguageData extends RowDataPacket {
-  language: string;
+  language: Language;
 }
 
 interface CountData extends RowDataPacket {
