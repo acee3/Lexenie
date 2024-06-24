@@ -1,9 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { botResponse, query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID } from '../index.js';
-import { LanguageData, MessageData, CountData, Language, WaveChunks } from '../lib/types.js';
-import { AudioChunkSentBeforeStartRecordingError, BackendError, QueryError, UnknownError } from '../lib/errors.js';
+import { botResponse, transcribe, query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID } from '../index.js';
+import { LanguageData, MessageData, CountData, Language, WaveChunks, OutputMessage } from '../lib/types.js';
+import { AudioChunkSentBeforeStartRecordingError, AudioNotRecordedError, BackendError, DeletedFileDoesNotExistError, QueryError, UnknownError } from '../lib/errors.js';
 import { Socket } from 'socket.io';
 import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from '../setup/websocket.js';
+import path from 'path';
+import fs from 'fs';
 
 const createConversation = async (req: Request, res: Response) => {
   try {
@@ -22,14 +24,24 @@ const createConversation = async (req: Request, res: Response) => {
       res.status(error.status).send(error.message);
       return;
     }
-    res.status(500).send("Unknown error with retrieving conversation");
+    res.status(500).send("Unknown error with creating conversation");
   }
 };
 
 const retrieveConversation = async (req: Request, res: Response) => {
-  const conversationId = req.body.conversationId;
   try {
-    // res.status(200).send(prevMessages);
+    const conversationId = req.body.conversationId;
+    const batchNumber = req.body.batchNumber;
+    const prevMessages = await query<MessageData>(`SELECT * FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 16 OFFSET ${batchNumber * 16}`, [conversationId.toString()]);
+    const response: OutputMessage[] = prevMessages.map(message => {
+      return {
+        conversationId: message.conversation_id,
+        userId: message.user_id,
+        messageText: message.message_text,
+        createdAt: message.created_at
+      }
+    });
+    res.status(200).send(response);
   } catch (error) {
     if (error instanceof BackendError) {
       res.status(error.status).send(error.message);
@@ -64,7 +76,7 @@ const receiveAudioChunk = async (socket: Socket<ClientToServerEvents, ServerToCl
     try {
       const conversationId: number = input.conversationId;
 
-      const conversationExists = await query<CountData>(`SELECT COUNT(*) AS count FROM ${USER_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
+      const conversationExists = await query<CountData>(`SELECT COUNT(*) AS count FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
       if (conversationExists[0].count != 0) 
         throw new QueryError("Conversation ID does not exist in database");
 
@@ -91,22 +103,26 @@ const stopRecordingSendMessage = async (socket: Socket<ClientToServerEvents, Ser
       const conversationId: number = input;
       const createdAt: string = new Date().toISOString().substring(0, 23);
       const audioFilePath: string = `${userId}/${conversationId}/${createdAt}.wav`;
-
+      const audioString = socket.data.audioChunksMap.get(conversationId)?.audioChunks.join('');
+      if (audioString == undefined)
+        throw new AudioNotRecordedError("No audio string present, but recording was sent.");
+      const buffer = Buffer.from(
+        audioString,
+        'base64'
+      );
+      const localFilePath = path.join(__dirname, `${socket.data.userId}_temp.wav`);
+      fs.writeFileSync(localFilePath, buffer);
       
-      // upload to s3
-
-      socket.data.audioChunksMap.delete(conversationId);
-
-      const messageText: string = input.messageText;
-      // HANDLE AUDIO FILE AND USE VAD TO DETECT WHEN STOP SPEAKING AND THEN TRANSCRIBE IT AND MAKE IT messageText
+      const messageText: string = await transcribe(localFilePath);
+      socket.data.audioChunksMap.delete(conversationId);  // Reset for new recording to be started
   
-      const conversationExists = await query<CountData>(`SELECT COUNT(*) AS count FROM ${USER_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
+      const conversationExists = await query<CountData>(`SELECT COUNT(*) AS count FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
       if (conversationExists[0].count != 0)
         throw new QueryError("Conversation ID does not exist in database");
   
       await query(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at, audio_file_path) VALUES (?, ?, ?, ?, ?)`, [conversationId.toString(), userId.toString(), messageText, createdAt, audioFilePath]);
   
-      const prevMessages = await query<MessageData>(`SELECT * FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 25`, [conversationId.toString()]);
+      const prevMessages = await query<MessageData>(`SELECT * FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 32`, [conversationId.toString()]);
       const languageRows = await query<LanguageData>(`SELECT language FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
       const language = languageRows.length > 0 ? languageRows[0].language : "English";
       const responseText = await botResponse(language, prevMessages, messageText);
@@ -118,6 +134,13 @@ const stopRecordingSendMessage = async (socket: Socket<ClientToServerEvents, Ser
         userId: parseInt(BOT_USER_ID),
         messageText: responseText,
         createdAt: new Date(responseCreatedAt)
+      });
+
+      // TODO: upload to s3
+
+      fs.unlink(localFilePath, (err) => {
+        if (err)
+          throw new DeletedFileDoesNotExistError("Attempted to delete a file that does not exist.");
       });
     } catch (error) {
       if (error instanceof BackendError) {
@@ -131,7 +154,18 @@ const stopRecordingSendMessage = async (socket: Socket<ClientToServerEvents, Ser
 };
 
 const deleteConversation = async (req: Request, res: Response) => {
-
+  try {
+    const conversationId = req.body.conversationId;
+    await query(`DELETE FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
+    await query(`DELETE FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
+    res.status(200);
+  } catch (error) {
+    if (error instanceof BackendError) {
+      res.status(error.status).send(error.message);
+      return;
+    }
+    res.status(500).send("Unknown error with deleting conversation");
+  }
 }
 
-export { createConversation, retrieveConversation, stopRecordingSendMessage };
+export { createConversation, retrieveConversation, startRecording, receiveAudioChunk, stopRecordingSendMessage, deleteConversation };
