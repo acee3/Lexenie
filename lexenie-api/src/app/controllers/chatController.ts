@@ -14,7 +14,7 @@ const createConversation = async (req: Request, res: Response) => {
     const startTime: string = new Date().toISOString().substring(0, 23);
     
     const userExists = await query<CountData>(`SELECT COUNT(*) AS count FROM ${USER_TABLE_NAME} WHERE user_id = ?`, [userId.toString()]);
-    if (userExists[0].count != 0)
+    if (userExists[0].count == 0)
       throw new QueryError("User ID does not exist in database");
 
     await query(`INSERT INTO ${CONVERSATION_TABLE_NAME} (language, start_time, user_id) VALUES (?, ?, ?)`, [language, startTime, userId.toString()]);
@@ -24,7 +24,8 @@ const createConversation = async (req: Request, res: Response) => {
       res.status(error.status).send(error.message);
       return;
     }
-    res.status(500).send("Unknown error with creating conversation");
+    const unknownError = new UnknownError("Unknown error with creating conversation.");
+    res.status(unknownError.status).send(unknownError.message);
   }
 };
 
@@ -47,7 +48,8 @@ const retrieveConversation = async (req: Request, res: Response) => {
       res.status(error.status).send(error.message);
       return;
     }
-    res.status(500).send("Unknown error with retrieving conversation");
+    const unknownError = new UnknownError("Unknown error with retrieving conversation.");
+    res.status(unknownError.status).send(unknownError.message);
   }
 };
 
@@ -77,7 +79,7 @@ const receiveAudioChunk = async (socket: Socket<ClientToServerEvents, ServerToCl
       const conversationId: number = input.conversationId;
 
       const conversationExists = await query<CountData>(`SELECT COUNT(*) AS count FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
-      if (conversationExists[0].count != 0) 
+      if (conversationExists[0].count == 0) 
         throw new QueryError("Conversation ID does not exist in database");
 
       if (socket.data.audioChunksMap == undefined || !socket.data.audioChunksMap.has(conversationId))
@@ -117,7 +119,7 @@ const stopRecordingSendMessage = async (socket: Socket<ClientToServerEvents, Ser
       socket.data.audioChunksMap.delete(conversationId);  // Reset for new recording to be started
   
       const conversationExists = await query<CountData>(`SELECT COUNT(*) AS count FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
-      if (conversationExists[0].count != 0)
+      if (conversationExists[0].count == 0)
         throw new QueryError("Conversation ID does not exist in database");
   
       await query(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at, audio_file_path) VALUES (?, ?, ?, ?, ?)`, [conversationId.toString(), userId.toString(), messageText, createdAt, audioFilePath]);
@@ -164,7 +166,8 @@ const deleteConversation = async (req: Request, res: Response) => {
       res.status(error.status).send(error.message);
       return;
     }
-    res.status(500).send("Unknown error with deleting conversation");
+    const unknownError = new UnknownError("Unknown error with deleting conversation.");
+    res.status(unknownError.status).send(unknownError.message);
   }
 }
 

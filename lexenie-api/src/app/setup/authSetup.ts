@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import { SetupError } from '../lib/errors';
+import { SetupError, UnauthorizedError } from '../lib/errors.js';
+import { TokenData } from '../lib/types.js';
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -8,8 +9,22 @@ if (JWT_SECRET === undefined) {
   throw new SetupError("JWT_SECRET is not defined in .env file");
 }
 
-const generateToken = (username: string) => {
-  return jwt.sign(username, JWT_SECRET, { expiresIn: '1h' });
+const generateToken = (payload: TokenData) => {
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
 }
 
-export { generateToken };
+const verifyToken = (token: string) => {
+  const payload = jwt.verify(token, JWT_SECRET);
+  if (typeof payload === 'string')
+    throw new UnauthorizedError("Payload is incorrect");
+
+  const isTokenData = (payload: any): payload is TokenData => {
+    return payload.username;
+  }
+  if (!isTokenData(payload))
+    throw new UnauthorizedError("Payload is incorrect");
+
+  return payload;
+}
+
+export { generateToken, verifyToken };

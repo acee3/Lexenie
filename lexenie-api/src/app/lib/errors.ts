@@ -63,6 +63,30 @@ class DeletedFileDoesNotExistError extends BackendError {
   }
 }
 
+class UnauthorizedError extends BackendError {
+  constructor(message: string, status: number = 401) {
+    super(message);
+    this.name = "CredentialError";
+    this.status = status;
+  }
+}
+
+class ConflictError extends BackendError {
+  constructor(message: string, status: number = 409) {
+    super(message);
+    this.name = "ConflictError";
+    this.status = status;
+  }
+}
+
+class NotFoundError extends BackendError {
+  constructor(message: string, status: number = 404) {
+    super(message);
+    this.name = "NotFoundError";
+    this.status = status;
+  }
+}
+
 class UnknownError extends BackendError {
   constructor(message: string = "An unknown error occurred.", status: number = 500) {
     super(message);
@@ -71,4 +95,4 @@ class UnknownError extends BackendError {
   }
 }
 
-export { SetupError, BackendError, BotResponseError, QueryError, WebsocketNotConnectError, AudioChunkSentBeforeStartRecordingError, AudioNotRecordedError, DeletedFileDoesNotExistError, UnknownError };
+export { SetupError, BackendError, BotResponseError, QueryError, WebsocketNotConnectError, AudioChunkSentBeforeStartRecordingError, AudioNotRecordedError, DeletedFileDoesNotExistError, UnauthorizedError, ConflictError, NotFoundError, UnknownError };

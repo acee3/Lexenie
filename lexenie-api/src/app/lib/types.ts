@@ -54,6 +54,14 @@ interface MessageData extends RowDataPacket {
   audio_file_path?: string;
 }
 
+interface UserData extends RowDataPacket {
+  user_id: number;
+  username: string;
+  password_hash: string;
+  email: string;
+  created_at: Date;
+}
+
 interface LanguageData extends RowDataPacket {
   language: Language;
 }
@@ -62,7 +70,15 @@ interface CountData extends RowDataPacket {
   count: number;
 }
 
-export { MessageData, LanguageData, CountData };
+export { MessageData, UserData, LanguageData, CountData };
+
+
+// AUTH TYPES
+interface TokenData {
+  username: string;
+}
+
+export { TokenData };
 
 
 // ERROR TYPE
