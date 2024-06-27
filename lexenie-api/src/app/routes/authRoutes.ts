@@ -1,7 +1,7 @@
 import Router from 'express-promise-router';
 import { createUser, login } from '../controllers/authController.js';
 
-export default async function getChatRouter() {
+export default async function getAuthRouter() {
   const authRouter = Router();
 
   authRouter.post('/createUser', createUser);

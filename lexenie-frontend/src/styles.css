@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #f21e6f;
+  --secondary: #f58360; 
+}
+
+body {
+  overscroll-behavior: none;
+}
+
+@keyframes gradientBG {
+  0% {
+    background-position: 0% 00%;
+  }
+  100% {
+    background-position: 100% 100%;
+  }
+}

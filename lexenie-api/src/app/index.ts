@@ -9,6 +9,7 @@ import session from 'express-session';
 import { generateToken, verifyToken } from './setup/authSetup.js';
 
 import { CountData } from './lib/types.js';
+import getAuthRouter from './routes/authRoutes.js';
 
 const app = express();
 
@@ -29,7 +30,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 const chatRouter = await getChatRouter();
-app.use('/', chatRouter);
+app.use('/chat', chatRouter);
+const authRoute = await getAuthRouter();
+app.use('/auth', authRoute);
 
 export { io, botResponse, transcribe, query, generateToken, verifyToken, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID };
 export default httpServer;
