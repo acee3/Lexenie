@@ -1,0 +1,7 @@
+<div [class]="'w-full h-fit flex' + (movingLeft ? ' justify-start ' : ' justify-end ')">
+  <div [class]="'min-w-fit min-h-fit whitespace-nowrap flex' + (movingLeft ? ' animate-slideLeft ' : ' animate-slideRight ')">
+    @for (indexedText of indexedTexts; track indexedText.id) {
+      <span class="text-[12.5vh] leading-[12.5vh] text-primary-sub font-thin mx-8">{{ indexedText.text }}</span>
+    }
+  </div>
+</div>

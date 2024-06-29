@@ -1,0 +1,6 @@
+<!-- <div class="absolute overflow-hidden h-screen w-screen text-textColor-100"> -->
+<div class="overflow-hidden text-textColor-100">
+  @for (rowInfo of rowInfos; track rowInfo.id) {
+    <sliding-text-row [texts]="rowInfo.texts" [startingIndex]="rowInfo.startingIndex" [movingLeft]="rowInfo.movingLeft"></sliding-text-row>
+  }
+</div>
