@@ -1,0 +1,22 @@
+<div>
+  <h1 class="text-8xl font-bold text-textColor-100">Lexenie</h1>
+  <p class="text-xl text-textColor-80">Sign Up</p>
+</div>
+<form [formGroup]="signup" class="w-full flex flex-col items-center justify-center gap-4 px-8">
+  <label for="email" class="w-full flex flex-col items-start justify-between text-textColor-100 text-base">
+    Email: 
+    <input type="email" formControlName="email" name="email" class="w-full rounded-md outline-none px-2 py-1 text-base text-textColor-80" />
+  </label>
+  <label for="username" class="w-full flex flex-col items-start justify-between text-textColor-100 text-base">
+    Username: 
+    <input type="text" formControlName="username" name="username" class="w-full rounded-md outline-none px-2 py-1 text-base text-textColor-80" />
+  </label>
+  <label for="password" class="w-full flex flex-col items-start justify-between text-textColor-100 text-base">
+    Password: 
+    <input type="password" formControlName="password" name="password" class="w-full rounded-md outline-none px-2 py-1 text-base text-textColor-80" />
+  </label>
+  <cool-button type="submit" class="my-4" [text]="'Sign Up'"></cool-button>
+</form>
+<div class="my-2">
+  Already have an account? <a routerLink="/auth/login" class="text-primary-100 font-bold">Log In</a>
+</div>

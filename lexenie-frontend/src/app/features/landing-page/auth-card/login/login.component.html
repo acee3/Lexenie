@@ -1,0 +1,22 @@
+<div>
+  <h1 class="text-8xl font-bold text-textColor-100">Lexenie</h1>
+  <p class="text-xl text-textColor-80">Log In</p>
+</div>
+<form 
+  [formGroup]="login" 
+  (ngSubmit)="onSubmit()"
+  class="w-full flex flex-col items-center justify-center gap-4 px-8 py-6"
+>
+  <label for="email" class="w-full flex flex-col items-start justify-between text-textColor-100 text-base">
+    Email: 
+    <input type="email" formControlName="email" name="email" class="w-full rounded-md outline-none px-2 py-1 text-base text-textColor-80" />
+  </label>
+  <label for="password" class="w-full flex flex-col items-start justify-between text-textColor-100 text-base">
+    Password: 
+    <input type="password" formControlName="password" name="password" class="w-full rounded-md outline-none px-2 py-1 text-base text-textColor-80" />
+  </label>
+  <cool-button type="submit" class="mt-4" [text]="'Login'"></cool-button>
+</form>
+<div class="my-2">
+  Don't have an account? <a routerLink="/auth/signup" class="text-primary-100 font-bold">Sign up</a>
+</div>

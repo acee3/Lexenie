@@ -1,0 +1,32 @@
+<div class="flex h-screen">
+  <!-- Side Panel -->
+  <div class="w-1/4 bg-gray-200 p-4">
+    <h2 class="text-xl font-bold mb-4">Conversations</h2>
+    <ul>
+      <li *ngFor="let conversation of conversations" 
+          (click)="selectConversation(conversation)"
+          class="p-2 mb-2 bg-white rounded cursor-pointer hover:bg-gray-100">
+        {{ conversation.title }}
+      </li>
+    </ul>
+  </div>
+
+  <!-- Chat Page -->
+  <div class="flex-1 flex flex-col">
+    <div class="flex-1 p-4 overflow-y-auto">
+      <div *ngFor="let message of selectedConversation?.messages">
+        <div [class]="{'self-end bg-blue-500 text-white': message.sender === 'me', 'self-start bg-gray-300': message.sender !== 'me'}"
+             class="p-2 my-2 rounded max-w-xs">
+          {{ message.text }}
+        </div>
+      </div>
+    </div>
+    <div class="p-4 bg-gray-100">
+      <input
+        [(ngModel)]="newMessage"
+        (keyup.enter)="sendMessage()"
+        class="w-full p-2 border rounded" 
+        placeholder="Type a message...">
+    </div>
+  </div>
+</div>

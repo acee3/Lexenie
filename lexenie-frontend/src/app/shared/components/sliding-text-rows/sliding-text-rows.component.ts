@@ -20,7 +20,8 @@ export class SlidingTextRowsComponent {
   ];
 
   rowInfos: LanguageRowInfo[] = [];
-  constructor() {
+  
+  ngOnInit() {
     for (let i = 0; i < this.texts.length; i++)
       this.rowInfos[i] = {id: i, texts: this.texts, startingIndex: i, movingLeft: i % 2 == 0};
   }

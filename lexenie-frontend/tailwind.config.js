@@ -14,8 +14,8 @@ module.exports = {
           100: '#f58360',
         },
         textColor: {
-          100: '#382222',
-          80: '#5b1d1d'
+          100: '#42131a',
+          80: '#66353b'
         },
         textColorOpposite: {
           100: 'white'
@@ -34,6 +34,10 @@ module.exports = {
         slideLeft: 'slideLeft 60s linear infinite',
         slideRight: 'slideRight 60s linear infinite',
       },
+      boxShadow: {
+        'button-theme': '0 2px 25px 5px rgba(255, 100, 100, 0.9)',
+        'dark-theme': '0 0 10px 5px rgba(80, 0, 20, 0.2)',
+      }
     },
   },
   plugins: [],
