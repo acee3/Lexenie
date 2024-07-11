@@ -35,6 +35,7 @@ interface InputChunk {
 }
 
 interface OutputMessage {
+  messageId: number;
   conversationId: number;
   userId: number;
   messageText: string;
@@ -70,7 +71,11 @@ interface CountData extends RowDataPacket {
   count: number;
 }
 
-export { MessageData, UserData, LanguageData, CountData };
+interface IdData extends RowDataPacket {
+  id: number;
+}
+
+export { MessageData, UserData, LanguageData, CountData, IdData };
 
 
 // AUTH TYPES

@@ -8,10 +8,12 @@ module.exports = {
       colors: {
         primary: {
           100: '#f21e6f',
+          80: '#ea528a',
           sub: "#f998a7"
         },
         secondary: {
           100: '#f58360',
+          sub: '#ffe1d8'
         },
         textColor: {
           100: '#42131a',

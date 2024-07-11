@@ -1,10 +1,10 @@
 import { Routes } from '@angular/router';
-import { LandingPageComponent } from './features/landing-page/landing-page.component';
-import { AuthCardComponent } from './features/landing-page/auth-card/auth-card.component';
-import { LandingCardComponent } from './features/landing-page/landing-card/landing-card.component';
+import { LandingPageComponent } from './features/landing-auth-page/landing-page.component';
+import { AuthCardComponent } from './features/landing-auth-page/auth-card/auth-card.component';
+import { LandingCardComponent } from './features/landing-auth-page/landing-card/landing-card.component';
 import { ChatPageComponent } from './features/chat-page/chat-page.component';
-import { LoginComponent } from './features/landing-page/auth-card/login/login.component';
-import { SignupComponent } from './features/landing-page/auth-card/signup/signup.component';
+import { LoginComponent } from './features/landing-auth-page/auth-card/login/login.component';
+import { SignupComponent } from './features/landing-auth-page/auth-card/signup/signup.component';
 
 export const routes: Routes = [
   {

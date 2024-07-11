@@ -9,8 +9,9 @@ if (JWT_SECRET === undefined) {
   throw new SetupError("JWT_SECRET is not defined in .env file");
 }
 
+const expiresIn = 3600;
 const generateToken = (payload: TokenData) => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '1h' });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: expiresIn });
 }
 
 const verifyToken = (token: string) => {
@@ -27,4 +28,4 @@ const verifyToken = (token: string) => {
   return payload;
 }
 
-export { generateToken, verifyToken };
+export { generateToken, verifyToken, expiresIn };

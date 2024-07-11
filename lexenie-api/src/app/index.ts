@@ -6,7 +6,7 @@ import createWebsocket from './setup/websocket.js';
 import { createServer } from 'http';
 import cors from 'cors';
 import session from 'express-session';
-import { generateToken, verifyToken } from './setup/authSetup.js';
+import { generateToken, verifyToken, expiresIn } from './setup/authSetup.js';
 
 import { CountData } from './lib/types.js';
 import getAuthRouter from './routes/authRoutes.js';
@@ -34,5 +34,5 @@ app.use('/chat', chatRouter);
 const authRoute = await getAuthRouter();
 app.use('/auth', authRoute);
 
-export { io, botResponse, transcribe, query, generateToken, verifyToken, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID };
+export { io, botResponse, transcribe, query, generateToken, verifyToken, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, expiresIn };
 export default httpServer;

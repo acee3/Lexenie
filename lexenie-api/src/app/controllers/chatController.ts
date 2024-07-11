@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { botResponse, transcribe, query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID } from '../index.js';
-import { LanguageData, MessageData, CountData, Language, WaveChunks, OutputMessage } from '../lib/types.js';
+import { LanguageData, MessageData, CountData, Language, WaveChunks, OutputMessage, IdData } from '../lib/types.js';
 import { AudioChunkSentBeforeStartRecordingError, AudioNotRecordedError, BackendError, DeletedFileDoesNotExistError, QueryError, UnknownError } from '../lib/errors.js';
 import { Socket } from 'socket.io';
 import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from '../setup/websocket.js';
@@ -36,6 +36,7 @@ const retrieveConversation = async (req: Request, res: Response) => {
     const prevMessages = await query<MessageData>(`SELECT * FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 16 OFFSET ${batchNumber * 16}`, [conversationId.toString()]);
     const response: OutputMessage[] = prevMessages.map(message => {
       return {
+        messageId: message.message_id,
         conversationId: message.conversation_id,
         userId: message.user_id,
         messageText: message.message_text,
@@ -130,8 +131,9 @@ const stopRecordingSendMessage = async (socket: Socket<ClientToServerEvents, Ser
       const responseText = await botResponse(language, prevMessages, messageText);
       const responseCreatedAt: string = new Date().toISOString().substring(0, 23);
       const responseAudioFilePath: string = `${BOT_USER_ID}/${conversationId}/${responseCreatedAt}.wav`;
-      await query(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at, audio_file_path) VALUES (?, ?, ?, ?, ?)`, [conversationId.toString(), BOT_USER_ID, responseText, responseCreatedAt, responseAudioFilePath]);
+      const messageId = (await query<IdData>(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at, audio_file_path) VALUES (?, ?, ?, ?, ?); SELECT LAST_INSERT_ID();`, [conversationId.toString(), BOT_USER_ID, responseText, responseCreatedAt, responseAudioFilePath]))[0].id;
       socket.emit("responseMessage", {
+        messageId: messageId,
         conversationId: conversationId,
         userId: parseInt(BOT_USER_ID),
         messageText: responseText,
