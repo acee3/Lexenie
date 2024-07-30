@@ -1,5 +1,6 @@
 import { RowDataPacket } from "mysql2";
 
+// GENERAL TYPES
 type Language = "English" 
               | "Spanish" 
               | "French" 
@@ -9,14 +10,16 @@ type Language = "English"
               | "Cantonese"
               | "Japanese";
 
-export { Language };
+type Option<T> = T | null;
+
+export { Language, Option };
 
 
 // CLIENT TYPES
 interface WaveData {
-  sampleRate: number;
-  numberChannels: number;
-  bytesPerSample: number;
+  sampleRate: Option<number>;
+  numberChannels: Option<number>;
+  bytesPerSample: Option<number>;
 }
 
 interface StartRecordingData {
@@ -26,12 +29,13 @@ interface StartRecordingData {
 
 interface WaveChunks {
   waveData: WaveData;
-  audioChunks: string[];
+  chunks: string[];
 }
 
-interface InputChunk {
+interface OutputConversation {
   conversationId: number;
-  audioChunk: string;
+  name: string;
+  lastTime: Date;
 }
 
 interface OutputMessage {
@@ -42,17 +46,22 @@ interface OutputMessage {
   createdAt: Date;
 }
 
-export { WaveData, StartRecordingData, WaveChunks, InputChunk, OutputMessage };
+export { WaveData, StartRecordingData, WaveChunks, OutputConversation, OutputMessage };
 
 
 // DATABASE TYPES
+interface ConversationData extends RowDataPacket {
+  conversation_id: number,
+  name: string
+}
+
 interface MessageData extends RowDataPacket {
   message_id: number;
   conversation_id: number;
   user_id: number;
   message_text: string;
   created_at: Date;
-  audio_file_path?: string;
+  is_complete: boolean;
 }
 
 interface UserData extends RowDataPacket {
@@ -75,7 +84,7 @@ interface IdData extends RowDataPacket {
   id: number;
 }
 
-export { MessageData, UserData, LanguageData, CountData, IdData };
+export { ConversationData, MessageData, UserData, LanguageData, CountData, IdData };
 
 
 // AUTH TYPES
@@ -87,10 +96,10 @@ export { TokenData };
 
 
 // ERROR TYPE
-interface Error {
+interface OutputError {
   name: string;
   message: string;
   status: number;
 }
 
-export { Error };
+export { OutputError };

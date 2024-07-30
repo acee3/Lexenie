@@ -1,17 +1,19 @@
-import { Server, Socket } from 'socket.io';
+import { Server } from 'socket.io';
 import http from 'http';
-import { WebsocketNotConnectError } from '../lib/errors.js';
-import { Error, InputChunk, OutputMessage, StartRecordingData, WaveChunks } from '../lib/types.js';
+import { OutputError, Option, OutputConversation, OutputMessage, StartRecordingData, WaveChunks } from '../lib/types.js';
 
 interface ServerToClientEvents {
   responseMessage: (response: OutputMessage) => void;
-  error: (error: Error) => void;
+  error: (error: OutputError) => void;
 }
 
 interface ClientToServerEvents {
-  startRecording: (input: StartRecordingData) => void;
-  receiveAudioChunk: (input: InputChunk) => void;
-  sendMessage: (input: number) => void;
+  getConversations: (callback: (response: OutputError | OutputConversation[]) => void) => void;
+  retrieveMessages: (conversationId: number, callback: (response: OutputError | OutputMessage[]) => void) => void;
+  startRecording: (input: StartRecordingData, callback: (response: OutputError | string) => void) => void;
+  receiveAudioChunk: (audioChunk: string, callback: (response: OutputError | string) => void) => void;
+  stopRecording: (callback: (response: OutputError | string) => void) => void;
+  sendMessage: (conversationId: number, messageText: string, callback: (response: OutputError | string) => void) => void;
 }
 
 interface InterServerEvents {
@@ -20,7 +22,10 @@ interface InterServerEvents {
 
 interface SocketData {
   userId: number;
-  audioChunksMap: Map<number, WaveChunks>;
+  audioChunks: WaveChunks;
+  conversationBatchNumber: number;
+  currentConversationId: Option<number>;
+  messageBatchNumber: number;
 }
 
 export { ServerToClientEvents, ClientToServerEvents, InterServerEvents, SocketData }
