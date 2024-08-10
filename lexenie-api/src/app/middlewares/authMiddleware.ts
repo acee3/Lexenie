@@ -33,17 +33,17 @@ const authorizeToken = async (req: Request, res: Response, next: NextFunction) =
 }
 
 const authorizeTokenWebsocket = async (socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>, next: (err?: ExtendedError) => void) => {
-  if (!socket.handshake.query || !socket.handshake.query.token) {
+  if (!socket.handshake.headers.auth_token || !socket.handshake.headers.auth_token) {
     next(new UnauthorizedError("Token is not provided"));
     return;
   }
 
-  if (typeof socket.handshake.query.token !== 'string') {
+  if (typeof socket.handshake.headers.auth_token !== 'string') {
     next(new UnauthorizedError("Token is not a string"));
     return;
   }
   
-  const payload = verifyToken(socket.handshake.query.token);
+  const payload = verifyToken(socket.handshake.headers.auth_token);
   const users = await query<UserData>(`SELECT * FROM ${USER_TABLE_NAME} WHERE username = ?`, [payload.username]);
   if (users.length == 0)
     throw new NotFoundError("Username does not exist in database");

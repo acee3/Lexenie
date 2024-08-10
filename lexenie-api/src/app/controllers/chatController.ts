@@ -190,9 +190,6 @@ const sendMessage = async (socket: Socket<ClientToServerEvents, ServerToClientEv
         throw new QueryError("Conversation ID does not exist in database");
   
       await query(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at) VALUES (?, ?, ?, ?, ?)`, [conversationId.toString(), userId.toString(), messageText, createdAt]);
-
-      callback("Message sent.");
-
   
       const prevMessages = await query<MessageData>(`SELECT * FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ? AND is_complete = TRUE ORDER BY created_at ASC LIMIT 32`, [conversationId.toString()]);
       const languageRows = await query<LanguageData>(`SELECT language FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
@@ -201,7 +198,7 @@ const sendMessage = async (socket: Socket<ClientToServerEvents, ServerToClientEv
       const responseCreatedAt: string = new Date().toISOString().substring(0, 23);
       const responseAudioFilePath: string = `${BOT_USER_ID}/${conversationId}/${responseCreatedAt}.wav`;
       const messageId = (await query<IdData>(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at, audio_file_path) VALUES (?, ?, ?, ?, ?); SELECT LAST_INSERT_ID();`, [conversationId.toString(), BOT_USER_ID, responseText, responseCreatedAt, responseAudioFilePath]))[0].id;
-      socket.emit("responseMessage", {
+      callback({
         messageId: messageId,
         conversationId: conversationId,
         userId: parseInt(BOT_USER_ID),
@@ -211,12 +208,10 @@ const sendMessage = async (socket: Socket<ClientToServerEvents, ServerToClientEv
     } catch (error) {
       if (error instanceof BackendError) {
         callback({ name: error.name, message: error.message, status: error.status });
-        socket.emit("error", { name: error.name, message: error.message, status: error.status });
         return;
       }
       const unknownError = new UnknownError("An unknown error occurred when sending a message.");
       callback({ name: unknownError.name, message: unknownError.message, status: unknownError.status });
-      socket.emit("error", { name: unknownError.name, message: unknownError.message, status: unknownError.status });
     }
   });
 };

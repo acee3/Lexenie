@@ -2,7 +2,11 @@
   <h1 class="text-8xl font-bold text-textColor-100">Lexenie</h1>
   <p class="text-xl text-textColor-80">Sign Up</p>
 </div>
-<form [formGroup]="signup" class="w-full flex flex-col items-center justify-center gap-4 px-8">
+<form 
+  [formGroup]="signup" 
+  (ngSubmit)="onSubmit()"
+  class="w-full flex flex-col items-center justify-center gap-4 px-8"
+>
   <label for="email" class="w-full flex flex-col items-start justify-between text-textColor-100 text-base">
     Email: 
     <input type="email" formControlName="email" name="email" class="w-full rounded-md outline-none px-2 py-1 text-base text-textColor-80" />

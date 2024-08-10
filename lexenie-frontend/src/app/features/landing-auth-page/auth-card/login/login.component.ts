@@ -1,7 +1,8 @@
 import { Component } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CoolButtonComponent } from '../../../../shared/components/cool-button/cool-button.component';
+import { AuthService } from '../../../../core/auth.service';
 
 @Component({
   selector: 'login',
@@ -13,9 +14,37 @@ import { CoolButtonComponent } from '../../../../shared/components/cool-button/c
   }
 })
 export class LoginComponent {
-  constructor(private route: ActivatedRoute, private router: Router) { }
+  constructor(private authService: AuthService, private router: Router) { }
 
   onSubmit() {
+    if (this.login.invalid) {
+      alert('Invalid login');
+      return;
+    }
+    if (this.login.value.email === null 
+      || this.login.value.password === null
+      || this.login.value.email === undefined
+      || this.login.value.password === undefined
+    ) {
+      alert('Invalid login');
+      return;
+    }
+    try {
+      this.authService.login(this.login.value.email, this.login.value.password)
+      .subscribe({
+        next: (result) => {
+          alert('User logged in successfully ' + result);
+        },
+        error: (err) => {
+          alert('Error creating user ' + err);
+          throw new Error('Error creating user');
+        }
+      });
+    } catch (error) {
+      alert('Invalid login');
+      return;
+    }
+    
     this.router.navigate(['/chat']);
   }
 

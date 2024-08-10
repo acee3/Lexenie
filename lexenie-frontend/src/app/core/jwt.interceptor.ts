@@ -1,10 +1,10 @@
 import { HttpRequest, HttpHandlerFn, HttpEvent } from "@angular/common/http";
+import { inject } from "@angular/core";
 import { Observable } from "rxjs";
+import { BrowserStorageService } from "./storage.service";
 
-export function JWTInterceptor(req: HttpRequest<unknown>,
-  next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
-
-  const idToken = localStorage.getItem("id_token");
+export function JWTInterceptor(req: HttpRequest<unknown>, next: HttpHandlerFn): Observable<HttpEvent<unknown>> {
+  const idToken = inject(BrowserStorageService).get("id_token");
 
   if (idToken) {
     const cloned = req.clone({
@@ -14,6 +14,6 @@ export function JWTInterceptor(req: HttpRequest<unknown>,
 
     return next(cloned);
   }
-
+  
   return next(req);
 }

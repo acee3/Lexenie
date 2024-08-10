@@ -3,21 +3,22 @@ import { FormsModule } from '@angular/forms';
 import { TextBubbleComponent } from '../../shared/components/text-bubble/text-bubble.component';
 import { CoolButtonComponent } from '../../shared/components/cool-button/cool-button.component';
 import { NgOptimizedImage } from '@angular/common';
+import { ChatService, Conversation } from '../../core/chat.service';
 
-interface Message {
-  messageId: number;
-  conversationId: number;
-  userId: number;
-  messageText: string;
-  createdAt: Date;
-  translation?: string;
-}
+// interface Message {
+//   messageId: number;
+//   conversationId: number;
+//   userId: number;
+//   messageText: string;
+//   createdAt: Date;
+//   translation?: string;
+// }
 
-interface Conversation {
-  conversationId: number;
-  title: string;
-  messages: Message[];
-}
+// interface Conversation {
+//   conversationId: number;
+//   title: string;
+//   messages: Message[];
+// }
 
 
 @Component({
@@ -27,6 +28,20 @@ interface Conversation {
   templateUrl: './chat-page.component.html'
 })
 export class ChatPageComponent {
+  constructor(private chatService: ChatService) {
+    this.chatService.getConversations().subscribe({
+      next: (conversations) => {
+        alert('Got conversations ' + conversations);
+        this.conversations = conversations;
+        this.selectedConversation = this.conversations[0];
+      },
+      error: (err) => {
+        alert('Error getting conversations ' + err);
+        throw new Error('Error getting conversations');
+      }
+    });
+  }
+
   @ViewChild('chatBox') chatBox?: ElementRef<HTMLDivElement>;
 
   scrollToBottom(element: ElementRef<HTMLDivElement> | undefined): void {
@@ -43,48 +58,7 @@ export class ChatPageComponent {
   } 
   
 
-  conversations: Conversation[] = [
-    {
-      conversationId: 1,
-      title: 'Conversation 1',
-      messages: [
-        {
-          messageId: 1,
-          conversationId: 1,
-          userId: 1,
-          messageText: 'Hello, buddy! What do you want to talk about?',
-          createdAt: new Date()
-        },
-        {
-          messageId: 2,
-          conversationId: 1,
-          userId: 2,
-          messageText: 'You\'re stupid!',
-          createdAt: new Date()
-        }
-      ]
-    },
-    {
-      conversationId: 2,
-      title: 'Conversation 2',
-      messages: [
-        {
-          messageId: 3,
-          conversationId: 2,
-          userId: 1,
-          messageText: 'Hello, friend! What do you want to talk about?',
-          createdAt: new Date()
-        },
-        {
-          messageId: 4,
-          conversationId: 2,
-          userId: 2,
-          messageText: 'You\'re funny!',
-          createdAt: new Date()
-        }
-      ]
-    }
-  ];
+  conversations: Conversation[] = [];
 
   selectedConversation: Conversation = this.conversations[0];
   newMessage: string = '';
@@ -130,15 +104,16 @@ export class ChatPageComponent {
 
 
   sendMessage() {
+    console.log(this.chatService.isConnected());
     if (this.newMessage.trim() && this.selectedConversation) {
-      this.selectedConversation.messages.push({
-        messageId: this.selectedConversation.messages.length * -1 - 1,
-        conversationId: this.selectedConversation.conversationId,
-        userId: 2,
-        messageText: this.newMessage,
-        createdAt: new Date()
-      });
-      this.newMessage = '';
+      // this.selectedConversation.messages.push({
+      //   messageId: this.selectedConversation.messages.length * -1 - 1,
+      //   conversationId: this.selectedConversation.conversationId,
+      //   userId: 2,
+      //   messageText: this.newMessage,
+      //   createdAt: new Date()
+      // });
+      // this.newMessage = '';
     }
   }
 }

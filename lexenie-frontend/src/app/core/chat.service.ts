@@ -1,81 +1,25 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { io, Socket } from 'socket.io-client';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { Socket, io } from 'socket.io-client';
+import { Observable, Subject } from 'rxjs';
+import { SOCKET } from './socket.service.provider';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class ChatService {
-  private apiUrl = 'http://localhost:3306';
+  private apiUrl = 'http://localhost:3306/chat';
 
-  constructor(private http: HttpClient, private socket: Socket, private errorSubject: Subject<string>, public errors$: Observable<string>, private connectionSubject: Subject<boolean>, public connected$: Observable<boolean>) {
-    const idToken = localStorage.getItem("id_token");
-
-    if (idToken) {
-      this.socket = io(this.apiUrl, {
-        path: '/chat/',
-        reconnection: true,
-        autoConnect: false,
-        extraHeaders: {
-          Authorization: 'Bearer ' + idToken
-        }
-      });
-
-      this.errors$ = this.setupSocketErrorListeners();
-      this.connected$ = this.monitorConnection();
-      this.socket.connect();
-    }
+  constructor(
+    private http: HttpClient, 
+    @Inject(SOCKET) private socket: Socket
+  ) {
+    this.socket.connect();
   }
 
-  private setupSocketErrorListeners(): Observable<string> {
-    this.errorSubject = new Subject<string>();
-
-    this.socket.on('error', (error: Error) => {
-      this.errorSubject.next('error ' + error);
-    });
-
-    this.socket.on('connect_error', (connectionError: Error) => {
-      this.errorSubject.next('connect_error ' + connectionError?.message);
-    });
-
-    this.socket.on('connect_timeout', (connectionError: Error) => {
-      this.errorSubject.next('connect_timeout ' + connectionError?.message);
-    });
-
-    this.socket.on('reconnect_error', () => {
-      this.errorSubject.next('reconnect_error');
-    });
-
-    this.socket.on('reconnect_failed', () => {
-      this.errorSubject.next('reconnect_failed');
-    });
-
-    return this.errorSubject.asObservable();
+  isConnected(): boolean {
+    return this.socket.connected;
   }
-
-  private monitorConnection(): Observable<boolean> {
-    this.connectionSubject = new BehaviorSubject<boolean>(false);
-
-    this.socket.on('connect', () => {
-      this.connectionSubject.next(true);
-    });
-
-    this.socket.on('connection', () => {
-      this.connectionSubject.next(true);
-    });
-
-    this.socket.on('disconnect', () => {
-      this.connectionSubject.next(false);
-    });
-
-    this.socket.on('disconnecting', () => {
-      this.connectionSubject.next(false);
-    });
-
-    return this.connectionSubject.asObservable();
-  }
-
 
   createConversation(name: string, language: Language) {
     this.http.post(`${this.apiUrl}/createConversation`, { name: name, language: language });
@@ -88,7 +32,7 @@ export class ChatService {
   getConversations() {
     return new Observable<Conversation[]>((observer) => {
       this.socket.emit(
-        'getConversations',
+        '/chat/getConversations',
         (response: ServerError | Conversation[]) => {
           if (isServerError(response)) {
             observer.error(response);
@@ -104,7 +48,7 @@ export class ChatService {
   retrieveMessages(conversationId: number) {
     return new Observable<Message[]>((observer) => {
       this.socket.emit(
-        'retrieveMessages', conversationId,
+        '/chat/retrieveMessages', conversationId,
         (response: ServerError | Message[]) => {
           if (isServerError(response)) {
             observer.error(response);
@@ -118,15 +62,44 @@ export class ChatService {
   }
   
   startRecording(input: StartRecordingData) {
-    this.socket.emit('startRecording', input);
+    this.socket.emit('/chat/startRecording', input);
   }
 
   receiveAudioChunk(audioChunk: string) {
-    this.socket.emit('receiveAudioChunk', audioChunk);
+    this.socket.emit('/chat/receiveAudioChunk', audioChunk);
   }
 
-  stopRecordingSendMessage() {
-    this.socket.emit('stopRecordingSendMessage');
+  stopRecording() {
+    this.socket.emit('/chat/stopRecordingSendMessage');
+    return new Observable<string>((observer) => {
+      this.socket.emit(
+        'stopRecording',
+        (response: ServerError | string) => {
+          if (isServerError(response)) {
+            observer.error(response);
+            return;
+          }
+          observer.next(response);
+          observer.complete();
+        }
+      );
+    });
+  }
+
+  sendMessage(conversationId: number, messageText: string) {
+    return new Observable<Message>((observer) => {
+      this.socket.emit(
+        '/chat/sendMessage', conversationId, messageText,
+        (response: ServerError | Message) => {
+          if (isServerError(response)) {
+            observer.error(response);
+            return;
+          }
+          observer.next(response);
+          observer.complete();
+        }
+      );
+    });
   }
 }
 

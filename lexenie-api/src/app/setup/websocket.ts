@@ -3,7 +3,6 @@ import http from 'http';
 import { OutputError, Option, OutputConversation, OutputMessage, StartRecordingData, WaveChunks } from '../lib/types.js';
 
 interface ServerToClientEvents {
-  responseMessage: (response: OutputMessage) => void;
   error: (error: OutputError) => void;
 }
 
@@ -13,7 +12,7 @@ interface ClientToServerEvents {
   startRecording: (input: StartRecordingData, callback: (response: OutputError | string) => void) => void;
   receiveAudioChunk: (audioChunk: string, callback: (response: OutputError | string) => void) => void;
   stopRecording: (callback: (response: OutputError | string) => void) => void;
-  sendMessage: (conversationId: number, messageText: string, callback: (response: OutputError | string) => void) => void;
+  sendMessage: (conversationId: number, messageText: string, callback: (response: OutputError | OutputMessage) => void) => void;
 }
 
 interface InterServerEvents {
@@ -33,7 +32,7 @@ export { ServerToClientEvents, ClientToServerEvents, InterServerEvents, SocketDa
 
 const WEBSOCKET_CORS = {
   origin: "*",
-  methods: ["GET", "POST"]
+  methods: ["GET", "POST"],
 }
 
 export default async function createWebsocket(httpServer: http.Server) {
