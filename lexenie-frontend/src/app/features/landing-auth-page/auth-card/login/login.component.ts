@@ -34,6 +34,7 @@ export class LoginComponent {
       .subscribe({
         next: (result) => {
           alert('User logged in successfully ' + result);
+          this.router.navigate(['/chat']);
         },
         error: (err) => {
           alert('Error creating user ' + err);
@@ -44,8 +45,6 @@ export class LoginComponent {
       alert('Invalid login');
       return;
     }
-    
-    this.router.navigate(['/chat']);
   }
 
   login = new FormGroup({

@@ -30,7 +30,7 @@ export class AuthService {
         console.error(err);
         if (typeof err === 'string')
           throw new Error(err);
-        throw new Error("Unknown error with logging in user.");
+        throw new Error("Unknown error with creating user.");
       })
     )
   }

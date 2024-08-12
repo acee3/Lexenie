@@ -15,17 +15,21 @@ const generateToken = (payload: TokenData) => {
 }
 
 const verifyToken = (token: string) => {
-  const payload = jwt.verify(token, JWT_SECRET);
-  if (typeof payload === 'string')
-    throw new UnauthorizedError("Payload is incorrect");
-
-  const isTokenData = (payload: any): payload is TokenData => {
-    return payload.username;
+  try {
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (typeof payload === 'string')
+      throw new UnauthorizedError("Token payload is incorrect");
+  
+    const isTokenData = (payload: any): payload is TokenData => {
+      return payload.username;
+    }
+    if (!isTokenData(payload))
+      throw new UnauthorizedError("Token payload is incorrect");
+  
+    return payload;
+  } catch (error) {
+    throw new UnauthorizedError("Token is invalid: " + error);
   }
-  if (!isTokenData(payload))
-    throw new UnauthorizedError("Payload is incorrect");
-
-  return payload;
 }
 
 export { generateToken, verifyToken, expiresIn };

@@ -36,6 +36,7 @@ export class SignupComponent {
       .subscribe({
         next: (result) => {
           alert('User created successfully ' + result);
+          this.router.navigate(['/chat']);
         },
         error: (err) => {
           alert('Error creating user ' + err);
@@ -47,7 +48,6 @@ export class SignupComponent {
       return;
     }
     
-    this.router.navigate(['/chat']);
   }
 
   signup = new FormGroup({

@@ -7,12 +7,12 @@ interface ServerToClientEvents {
 }
 
 interface ClientToServerEvents {
-  getConversations: (callback: (response: OutputError | OutputConversation[]) => void) => void;
-  retrieveMessages: (conversationId: number, callback: (response: OutputError | OutputMessage[]) => void) => void;
-  startRecording: (input: StartRecordingData, callback: (response: OutputError | string) => void) => void;
-  receiveAudioChunk: (audioChunk: string, callback: (response: OutputError | string) => void) => void;
-  stopRecording: (callback: (response: OutputError | string) => void) => void;
-  sendMessage: (conversationId: number, messageText: string, callback: (response: OutputError | OutputMessage) => void) => void;
+  getConversations: (callback: (response: OutputConversation[]) => void) => void;
+  retrieveMessages: (conversationId: number, callback: (response: OutputMessage[]) => void) => void;
+  startRecording: (input: StartRecordingData, callback: (response: string) => void) => void;
+  receiveAudioChunk: (audioChunk: string, callback: (response: string) => void) => void;
+  stopRecording: (callback: (response: string) => void) => void;
+  sendMessage: (conversationId: number, messageText: string, callback: (response: OutputMessage) => void) => void;
 }
 
 interface InterServerEvents {

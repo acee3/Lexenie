@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { botResponse, transcribe, query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID } from '../index.js';
-import { LanguageData, MessageData, CountData, Language, OutputMessage, IdData, ConversationData, OutputConversation } from '../lib/types.js';
+import { LanguageData, MessageData, CountData, Language, OutputMessage, IdData, ConversationData, OutputConversation, OutputError } from '../lib/types.js';
 import { AudioChunkSentBeforeStartRecordingError, AudioNotRecordedError, BackendError, DeletedFileDoesNotExistError, QueryError, UnknownError } from '../lib/errors.js';
 import { Socket } from 'socket.io';
 import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from '../setup/websocket.js';
@@ -46,11 +46,11 @@ const getConversations = async (socket: Socket<ClientToServerEvents, ServerToCli
       callback(response);
     } catch (error) {
       if (error instanceof BackendError) {
-        callback({ name: error.name, message: error.message, status: error.status });
+        socket.emit("error", { name: error.name, message: error.message, status: error.status } as OutputError);
         return;
       }
       const unknownError = new UnknownError("An unknown error occurred when getting the conversations.");
-      callback({ name: unknownError.name, message: unknownError.message, status: unknownError.status });
+      socket.emit("error", { name: unknownError.name, message: unknownError.message, status: unknownError.status } as OutputError);
     }
   });
 };
@@ -77,11 +77,11 @@ const retrieveMessages = async (socket: Socket<ClientToServerEvents, ServerToCli
       callback(response);
     } catch (error) {
       if (error instanceof BackendError) {
-        callback({ name: error.name, message: error.message, status: error.status });
+        socket.emit("error", { name: error.name, message: error.message, status: error.status } as OutputError);
         return;
       }
       const unknownError = new UnknownError("An unknown error occurred when retrieving messages.");
-      callback({ name: unknownError.name, message: unknownError.message, status: unknownError.status });
+      socket.emit("error", { name: unknownError.name, message: unknownError.message, status: unknownError.status } as OutputError);
     }
   });
 };
@@ -96,11 +96,11 @@ const startRecording = async (socket: Socket<ClientToServerEvents, ServerToClien
       callback("Recording started.");
     } catch (error) {
       if (error instanceof BackendError) {
-        callback({ name: error.name, message: error.message, status: error.status });
+        socket.emit("error", { name: error.name, message: error.message, status: error.status } as OutputError);
         return;
       }
       const unknownError = new UnknownError("An unknown error occurred when starting to record.");
-      callback({ name: unknownError.name, message: unknownError.message, status: unknownError.status });
+      socket.emit("error", { name: unknownError.name, message: unknownError.message, status: unknownError.status } as OutputError);
     }
   });
 };
@@ -125,11 +125,11 @@ const receiveAudioChunk = async (socket: Socket<ClientToServerEvents, ServerToCl
       callback("Audio chunk received.");
     } catch (error) {
       if (error instanceof BackendError) {
-        callback({ name: error.name, message: error.message, status: error.status });
+        socket.emit("error", { name: error.name, message: error.message, status: error.status } as OutputError);
         return;
       }
       const unknownError = new UnknownError("An unknown error occurred when receiving an audio chunk.");
-      callback({ name: unknownError.name, message: unknownError.message, status: unknownError.status });
+      socket.emit("error", { name: unknownError.name, message: unknownError.message, status: unknownError.status } as OutputError);
     }
   });
 }
@@ -167,11 +167,11 @@ const stopRecording = async (socket: Socket<ClientToServerEvents, ServerToClient
       });
     } catch (error) {
       if (error instanceof BackendError) {
-        callback({ name: error.name, message: error.message, status: error.status });
+        socket.emit("error", { name: error.name, message: error.message, status: error.status } as OutputError);
         return;
       }
       const unknownError = new UnknownError("An unknown error occurred when stopping the recording.");
-      callback({ name: unknownError.name, message: unknownError.message, status: unknownError.status });
+      socket.emit("error", { name: unknownError.name, message: unknownError.message, status: unknownError.status } as OutputError);
     }
   });
 };
@@ -207,11 +207,11 @@ const sendMessage = async (socket: Socket<ClientToServerEvents, ServerToClientEv
       });
     } catch (error) {
       if (error instanceof BackendError) {
-        callback({ name: error.name, message: error.message, status: error.status });
+        socket.emit("error", { name: error.name, message: error.message, status: error.status } as OutputError);
         return;
       }
       const unknownError = new UnknownError("An unknown error occurred when sending a message.");
-      callback({ name: unknownError.name, message: unknownError.message, status: unknownError.status });
+      socket.emit("error", { name: unknownError.name, message: unknownError.message, status: unknownError.status } as OutputError);
     }
   });
 };

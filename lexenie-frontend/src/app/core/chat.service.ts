@@ -15,6 +15,9 @@ export class ChatService {
     @Inject(SOCKET) private socket: Socket
   ) {
     this.socket.connect();
+    this.socket.on('error', (error: ServerError) => {
+      console.error('Socket error:', error);
+    });
   }
 
   isConnected(): boolean {
@@ -33,7 +36,7 @@ export class ChatService {
     return new Observable<Conversation[]>((observer) => {
       this.socket.emit(
         '/chat/getConversations',
-        (response: ServerError | Conversation[]) => {
+        (response: Conversation[]) => {
           if (isServerError(response)) {
             observer.error(response);
             return;
@@ -49,7 +52,7 @@ export class ChatService {
     return new Observable<Message[]>((observer) => {
       this.socket.emit(
         '/chat/retrieveMessages', conversationId,
-        (response: ServerError | Message[]) => {
+        (response: Message[]) => {
           if (isServerError(response)) {
             observer.error(response);
             return;
@@ -74,7 +77,7 @@ export class ChatService {
     return new Observable<string>((observer) => {
       this.socket.emit(
         'stopRecording',
-        (response: ServerError | string) => {
+        (response: string) => {
           if (isServerError(response)) {
             observer.error(response);
             return;
@@ -90,7 +93,7 @@ export class ChatService {
     return new Observable<Message>((observer) => {
       this.socket.emit(
         '/chat/sendMessage', conversationId, messageText,
-        (response: ServerError | Message) => {
+        (response: Message) => {
           if (isServerError(response)) {
             observer.error(response);
             return;
