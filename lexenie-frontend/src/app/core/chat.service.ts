@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Socket, io } from 'socket.io-client';
 import { Observable, Subject } from 'rxjs';
-import { SOCKET } from './socket.service.provider';
+import { ServerError, SOCKET } from './socket.service.provider';
 
 @Injectable({
   providedIn: 'root',
@@ -14,10 +14,37 @@ export class ChatService {
     private http: HttpClient, 
     @Inject(SOCKET) private socket: Socket
   ) {
-    this.socket.connect();
-    this.socket.on('error', (error: ServerError) => {
-      console.error('Socket error:', error);
+    socket.on('connect', () => {
+      console.log('Socket connected');
     });
+
+    socket.on('connect_error', (error: any) => {
+      console.error('Connection error:', error);
+    });
+
+    socket.on('disconnect', (reason: string) => {
+      console.warn('Socket disconnected:', reason);
+    });
+  }
+
+  connectErrorObservable() {
+    return new Observable<any>((observer) => {
+      this.socket.on('connect_error', (error: any) => {
+        observer.next(error);
+      });
+    });
+  }
+
+  errorObservable() {
+    return new Observable<ServerError>((observer) => {
+      this.socket.on('error', (error: ServerError) => {
+        observer.next(error);
+      });
+    });
+  }
+
+  connect() {
+    this.socket.connect();
   }
 
   isConnected(): boolean {
@@ -128,12 +155,6 @@ export interface Conversation {
   conversationId: number;
   name: string;
   lastTime: Date;
-}
-
-export interface ServerError {
-  name: string;
-  message: string;
-  status: number;
 }
 
 function isServerError(response: any): response is ServerError {

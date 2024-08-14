@@ -7,27 +7,20 @@ import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketDa
 import path from 'path';
 import fs from 'fs';
 
-const createConversation = async (req: Request, res: Response) => {
-  try {
+const createConversation = async (req: Request, res: Response, next: NextFunction) => {
     const userId: number = req.body.userId;
     const name: string = req.body.name;
     const language: Language = req.body.language;
     const startTime: string = new Date().toISOString().substring(0, 23);
     
     const userExists = await query<CountData>(`SELECT COUNT(*) AS count FROM ${USER_TABLE_NAME} WHERE user_id = ?`, [userId.toString()]);
-    if (userExists[0].count == 0)
-      throw new QueryError("User ID does not exist in database");
+    if (userExists[0].count == 0) {
+      next(new QueryError("User ID does not exist in database"));
+      return;
+    }
 
     await query(`INSERT INTO ${CONVERSATION_TABLE_NAME} (name, language, start_time, last_time, user_id) VALUES (?, ?, ?, ?, ?)`, [name, language, startTime, startTime, userId.toString()]);
     res.status(200);
-  } catch (error) {
-    if (error instanceof BackendError) {
-      res.status(error.status).send(error.message);
-      return;
-    }
-    const unknownError = new UnknownError("Unknown error with creating conversation.");
-    res.status(unknownError.status).send(unknownError.message);
-  }
 };
 
 const getConversations = async (socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>) => {
@@ -217,19 +210,10 @@ const sendMessage = async (socket: Socket<ClientToServerEvents, ServerToClientEv
 };
 
 const deleteConversation = async (req: Request, res: Response) => {
-  try {
-    const conversationId = req.body.conversationId;
-    await query(`DELETE FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
-    await query(`DELETE FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
-    res.status(200);
-  } catch (error) {
-    if (error instanceof BackendError) {
-      res.status(error.status).send(error.message);
-      return;
-    }
-    const unknownError = new UnknownError("Unknown error with deleting conversation.");
-    res.status(unknownError.status).send(unknownError.message);
-  }
+  const conversationId = req.body.conversationId;
+  await query(`DELETE FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
+  await query(`DELETE FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
+  res.status(200);
 }
 
 export { createConversation, getConversations, retrieveMessages, startRecording, receiveAudioChunk, stopRecording, sendMessage, deleteConversation };

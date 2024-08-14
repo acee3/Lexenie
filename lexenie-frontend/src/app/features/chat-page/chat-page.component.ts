@@ -4,6 +4,7 @@ import { TextBubbleComponent } from '../../shared/components/text-bubble/text-bu
 import { CoolButtonComponent } from '../../shared/components/cool-button/cool-button.component';
 import { NgOptimizedImage } from '@angular/common';
 import { ChatService, Conversation } from '../../core/chat.service';
+import { Router } from '@angular/router';
 
 // interface Message {
 //   messageId: number;
@@ -28,18 +29,36 @@ import { ChatService, Conversation } from '../../core/chat.service';
   templateUrl: './chat-page.component.html'
 })
 export class ChatPageComponent {
-  constructor(private chatService: ChatService) {
-    this.chatService.getConversations().subscribe({
-      next: (conversations) => {
-        alert('Got conversations ' + conversations);
-        this.conversations = conversations;
-        this.selectedConversation = this.conversations[0];
-      },
-      error: (err) => {
-        alert('Error getting conversations ' + err);
-        throw new Error('Error getting conversations');
-      }
-    });
+  constructor(private chatService: ChatService, private router: Router) {
+    try {
+      chatService.connectErrorObservable().subscribe({
+        next: (_) => {
+          this.router.navigate(['/auth/login']);
+        }
+      });
+
+      chatService.errorObservable().subscribe({
+        next: (error) => {
+          if (error.message === 'UnknownError')
+            this.router.navigate(['/auth/login']);
+        }
+      });
+
+      chatService.connect();
+      this.chatService.getConversations().subscribe({
+        next: (conversations) => {
+          alert('Got conversations ' + conversations);
+          this.conversations = conversations;
+          this.selectedConversation = this.conversations[0];
+        },
+        error: (err) => {
+          alert('Error getting conversations ' + err);
+          throw new Error('Error getting conversations');
+        }
+      });
+    } catch (e) {
+      alert('Error getting conversations ' + e);
+    }
   }
 
   @ViewChild('chatBox') chatBox?: ElementRef<HTMLDivElement>;

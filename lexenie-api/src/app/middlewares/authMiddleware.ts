@@ -1,10 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { BackendError, NotFoundError, UnauthorizedError, UnknownError } from '../lib/errors.js';
-import { UserData, WaveChunks } from '../lib/types.js';
+import { UserData } from '../lib/types.js';
 import { query, verifyToken, USER_TABLE_NAME } from '../index.js';
-import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from '../setup/websocket.js';
-import { Socket } from 'socket.io';
-import { ExtendedError } from 'socket.io/dist/namespace.js';
 
 const authorizeToken = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -35,10 +32,10 @@ const authorizeToken = async (req: Request, res: Response, next: NextFunction) =
 }
 
 
-export interface AuthUserInfoRequest extends Request {
+interface AuthUserInfoRequest extends Request {
   userId: number;
 }
-export const isAuthUserInfoRequest = (variable: any): variable is AuthUserInfoRequest => {
+const isAuthUserInfoRequest = (variable: any): variable is AuthUserInfoRequest => {
   return (variable as AuthUserInfoRequest).userId !== undefined;
 }
 
@@ -66,4 +63,4 @@ const authorizeTokenWebsocket = async (req: AuthUserInfoRequest, res: Response, 
   }
 }
 
-export { authorizeToken, authorizeTokenWebsocket };
+export { authorizeToken, authorizeTokenWebsocket, AuthUserInfoRequest, isAuthUserInfoRequest };

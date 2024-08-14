@@ -10,6 +10,7 @@ import { generateToken, verifyToken, expiresIn } from './setup/authSetup.js';
 
 import { CountData } from './lib/types.js';
 import getAuthRouter from './routes/authRoutes.js';
+import handleErrors from './middlewares/errorHandler.js';
 
 const app = express();
 
@@ -33,6 +34,8 @@ const chatRouter = await getChatRouter();
 app.use('/chat', chatRouter);
 const authRoute = await getAuthRouter();
 app.use('/auth', authRoute);
+
+app.use(handleErrors);
 
 export { io, botResponse, transcribe, query, generateToken, verifyToken, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, expiresIn };
 export default httpServer;

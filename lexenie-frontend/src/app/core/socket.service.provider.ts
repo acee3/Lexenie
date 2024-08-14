@@ -9,22 +9,11 @@ function socketFactory(storageService: BrowserStorageService): Socket {
   
   const socket = io("http://localhost:3306", {
     path: '/',
-    // reconnection: true,
+    reconnection: false,
     autoConnect: false,
     extraHeaders: {
       authorization: `bearer ${idToken}`
     }
-  });
-  socket.on('connect', () => {
-    console.log('Socket connected');
-  });
-
-  socket.on('connect_error', (error: any) => {
-    console.error('Connection error:', error);
-  });
-
-  socket.on('disconnect', (reason: string) => {
-    console.warn('Socket disconnected:', reason);
   });
 
   return socket;
@@ -35,3 +24,13 @@ export const socketProvider = {
   useFactory: socketFactory,
   deps: [BrowserStorageService]
 };
+
+export interface ServerError {
+  name: string;
+  message: string;
+  status: number;
+}
+
+export function isServerError(obj: any): obj is ServerError {
+  return obj.name && obj.message && obj.status;
+}

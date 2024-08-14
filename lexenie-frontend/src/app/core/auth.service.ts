@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { tap, shareReplay, catchError } from 'rxjs/operators';
 import moment from 'moment';
 import { BrowserStorageService } from './storage.service';
+import { isServerError, ServerError } from './socket.service.provider';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,6 @@ export class AuthService {
 
   private setSession(authResult: AuthResult) {
     const expiresAt = moment().add(authResult.expiresIn, 'second');
-
     this.storageService.set('id_token', authResult.idToken);
     this.storageService.set("expires_at", JSON.stringify(expiresAt.valueOf()));
   }
@@ -27,9 +27,12 @@ export class AuthService {
       tap(result => this.setSession(result)),
       shareReplay(),
       catchError<AuthResult, never>((err, _) => {
-        console.error(err);
+        if (isServerError(err))
+          console.log();
         if (typeof err === 'string')
           throw new Error(err);
+        if (err.error && err.error.message)
+          throw new Error(err.error.message);
         throw new Error("Unknown error with creating user.");
       })
     )
@@ -40,9 +43,10 @@ export class AuthService {
       tap(result => this.setSession(result)),
       shareReplay(),
       catchError<AuthResult, never>((err, _) => {
-        console.error(err);
         if (typeof err === 'string')
           throw new Error(err);
+        if (err.error && err.error.message)
+          throw new Error(err.error.message);
         throw new Error("Unknown error with logging in user.");
       })
     );
