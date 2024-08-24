@@ -32,15 +32,18 @@ export class ChatPageComponent {
   constructor(private chatService: ChatService, private router: Router) {
     try {
       chatService.connectErrorObservable().subscribe({
-        next: (_) => {
-          this.router.navigate(['/auth/login']);
+        next: (error) => {
+          alert("B" + error.message);
+          console.log(error);
+          // this.router.navigate(['/auth/login']);
         }
       });
 
       chatService.errorObservable().subscribe({
         next: (error) => {
-          if (error.message === 'UnknownError')
-            this.router.navigate(['/auth/login']);
+          if (error.name === 'UnknownError')
+            alert("b")
+            // this.router.navigate(['/auth/login']);
         }
       });
 

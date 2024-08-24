@@ -3,6 +3,7 @@ import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CoolButtonComponent } from '../../../../shared/components/cool-button/cool-button.component';
 import { AuthService } from '../../../../core/auth.service';
+import { isServerError } from '../../../../core/socket.service.provider';
 
 @Component({
   selector: 'signup',
@@ -39,8 +40,16 @@ export class SignupComponent {
           this.router.navigate(['/chat']);
         },
         error: (err) => {
-          alert('Error creating user ' + err);
-          throw new Error('Error creating user');
+          if (err.error && isServerError(err.error)) {
+            switch (err.error.status) {
+              case 400:
+                throw new Error("Invalid username, password, or email.");
+              case 409:
+                throw new Error("Username or email already exists.");
+              default:
+                throw new Error("Unknown error with creating user.");
+            }
+          }
         }
       });
     } catch (error) {

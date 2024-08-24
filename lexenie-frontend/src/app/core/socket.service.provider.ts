@@ -8,11 +8,13 @@ function socketFactory(storageService: BrowserStorageService): Socket {
   const idToken = storageService.get('id_token');
   
   const socket = io("http://localhost:3306", {
-    path: '/',
+  // const socket = io("127.0.0.1:3306", {
+  // const socket = io("173.63.37.43:3306", {
+    // path: '/socket.io',
     reconnection: false,
     autoConnect: false,
     extraHeaders: {
-      authorization: `bearer ${idToken}`
+      authorization: `Bearer ${idToken}`
     }
   });
 

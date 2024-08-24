@@ -19,20 +19,15 @@ export class AuthService {
   }
 
   createUser(username: string, password: string, email: string) {
-
-    // TODO: handle status codes
-
-
     return this.http.post<AuthResult>(`${this.apiUrl}/createUser`, { username, password, email }).pipe(
       tap(result => this.setSession(result)),
       shareReplay(),
       catchError<AuthResult, never>((err, _) => {
-        if (isServerError(err))
-          console.log();
+        if (err.error != undefined && isServerError(err.error)) {
+          throw err;
+        }
         if (typeof err === 'string')
           throw new Error(err);
-        if (err.error && err.error.message)
-          throw new Error(err.error.message);
         throw new Error("Unknown error with creating user.");
       })
     )
@@ -43,11 +38,12 @@ export class AuthService {
       tap(result => this.setSession(result)),
       shareReplay(),
       catchError<AuthResult, never>((err, _) => {
+        if (err.error != undefined && isServerError(err.error)) {
+          throw err;
+        }
         if (typeof err === 'string')
           throw new Error(err);
-        if (err.error && err.error.message)
-          throw new Error(err.error.message);
-        throw new Error("Unknown error with logging in user.");
+        throw new Error("Unknown error with creating user.");
       })
     );
   }
