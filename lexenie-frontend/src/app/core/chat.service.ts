@@ -1,31 +1,30 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { ServerError } from './backend.types';
-import { Socket } from 'ngx-socket-io';
-import { API_URL } from '../app.config';
+import { Socket, io } from 'socket.io-client';
+import { Observable, Subject } from 'rxjs';
+import { ServerError, SOCKET } from './socket.service.provider';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ChatService {
-  private chatURL = `${API_URL}/chat`;
+  private apiUrl = 'http://localhost:3306/chat';
 
   constructor(
     private http: HttpClient, 
-    private socket: Socket
+    @Inject(SOCKET) private socket: Socket
   ) {
-    // socket.on('connect', () => {
-    //   console.log('Socket connected');
-    // });
+    socket.on('connect', () => {
+      console.log('Socket connected');
+    });
 
-    // socket.on('connect_error', (error: any) => {
-    //   console.error('Connection error:', error);
-    // });
+    socket.on('connect_error', (error: any) => {
+      console.error('Connection error:', error);
+    });
 
-    // socket.on('disconnect', (reason: string) => {
-    //   console.warn('Socket disconnected:', reason);
-    // });
+    socket.on('disconnect', (reason: string) => {
+      console.warn('Socket disconnected:', reason);
+    });
   }
 
   connectErrorObservable() {
@@ -44,16 +43,23 @@ export class ChatService {
     });
   }
 
+  connect() {
+    this.socket.connect();
+  }
+
+  isConnected(): boolean {
+    return this.socket.connected;
+  }
+
   createConversation(name: string, language: Language) {
-    this.http.post(`${this.chatURL}/createConversation`, { name: name, language: language });
+    this.http.post(`${this.apiUrl}/createConversation`, { name: name, language: language });
   }
 
   deleteConversation(conversationId: number) {
-    this.http.post(`${this.chatURL}/deleteConversation`, { conversationId: conversationId });
+    this.http.post(`${this.apiUrl}/deleteConversation`, { conversationId: conversationId });
   }
 
   getConversations() {
-
     return new Observable<Conversation[]>((observer) => {
       this.socket.emit(
         '/chat/getConversations',
