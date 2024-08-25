@@ -3,7 +3,7 @@ import { Router, RouterLink, RouterOutlet } from '@angular/router';
 import { FormGroup, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CoolButtonComponent } from '../../../../shared/components/cool-button/cool-button.component';
 import { AuthService } from '../../../../core/auth.service';
-import { isServerError } from '../../../../core/socket.service.provider';
+import { isServerError } from '../../../../core/backend.types';
 
 @Component({
   selector: 'signup',

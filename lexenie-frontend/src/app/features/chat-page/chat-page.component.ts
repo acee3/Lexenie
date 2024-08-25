@@ -31,34 +31,33 @@ import { Router } from '@angular/router';
 export class ChatPageComponent {
   constructor(private chatService: ChatService, private router: Router) {
     try {
-      chatService.connectErrorObservable().subscribe({
-        next: (error) => {
-          alert("B" + error.message);
-          console.log(error);
-          // this.router.navigate(['/auth/login']);
-        }
-      });
+      // chatService.connectErrorObservable().subscribe({
+      //   next: (error) => {
+      //     alert("B" + error.message);
+      //     console.log(error);
+      //     // this.router.navigate(['/auth/login']);
+      //   }
+      // });
 
-      chatService.errorObservable().subscribe({
-        next: (error) => {
-          if (error.name === 'UnknownError')
-            alert("b")
-            // this.router.navigate(['/auth/login']);
-        }
-      });
+      // chatService.errorObservable().subscribe({
+      //   next: (error) => {
+      //     if (error.name === 'UnknownError')
+      //       alert("b")
+      //       // this.router.navigate(['/auth/login']);
+      //   }
+      // });
 
-      chatService.connect();
-      this.chatService.getConversations().subscribe({
-        next: (conversations) => {
-          alert('Got conversations ' + conversations);
-          this.conversations = conversations;
-          this.selectedConversation = this.conversations[0];
-        },
-        error: (err) => {
-          alert('Error getting conversations ' + err);
-          throw new Error('Error getting conversations');
-        }
-      });
+      // this.chatService.getConversations().subscribe({
+      //   next: (conversations) => {
+      //     alert('Got conversations ' + conversations);
+      //     this.conversations = conversations;
+      //     this.selectedConversation = this.conversations[0];
+      //   },
+      //   error: (err) => {
+      //     alert('Error getting conversations ' + err);
+      //     throw new Error('Error getting conversations');
+      //   }
+      // });
     } catch (e) {
       alert('Error getting conversations ' + e);
     }
@@ -126,7 +125,7 @@ export class ChatPageComponent {
 
 
   sendMessage() {
-    console.log(this.chatService.isConnected());
+    // console.log(this.chatService.isConnected());
     if (this.newMessage.trim() && this.selectedConversation) {
       // this.selectedConversation.messages.push({
       //   messageId: this.selectedConversation.messages.length * -1 - 1,

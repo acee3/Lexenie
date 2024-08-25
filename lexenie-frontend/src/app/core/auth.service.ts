@@ -3,13 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { tap, shareReplay, catchError } from 'rxjs/operators';
 import moment from 'moment';
 import { BrowserStorageService } from './storage.service';
-import { isServerError, ServerError } from './socket.service.provider';
+import { isServerError, ServerError } from './backend.types';
+import { API_URL } from '../app.config';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:3306/auth';
+  private apiUrl = `${API_URL}/auth`;
   constructor(private storageService: BrowserStorageService, private http: HttpClient) { }
 
   private setSession(authResult: AuthResult) {
