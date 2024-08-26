@@ -15,6 +15,9 @@ function socketFactory(storageService: BrowserStorageService): Socket {
     autoConnect: false,
     extraHeaders: {
       authorization: `Bearer ${idToken}`
+    },
+    query: {
+      token: idToken
     }
   });
 

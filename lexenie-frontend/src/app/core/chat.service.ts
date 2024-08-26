@@ -14,15 +14,15 @@ export class ChatService {
     private http: HttpClient, 
     @Inject(SOCKET) private socket: Socket
   ) {
-    socket.on('connect', () => {
+    this.socket.on('connect', () => {
       console.log('Socket connected');
     });
 
-    socket.on('connect_error', (error: any) => {
+    this.socket.on('connect_error', (error: any) => {
       console.error('Connection error:', error);
     });
 
-    socket.on('disconnect', (reason: string) => {
+    this.socket.on('disconnect', (reason: string) => {
       console.warn('Socket disconnected:', reason);
     });
   }
@@ -62,7 +62,7 @@ export class ChatService {
   getConversations() {
     return new Observable<Conversation[]>((observer) => {
       this.socket.emit(
-        '/chat/getConversations',
+        'getConversations',
         (response: Conversation[]) => {
           if (isServerError(response)) {
             observer.error(response);
@@ -78,7 +78,7 @@ export class ChatService {
   retrieveMessages(conversationId: number) {
     return new Observable<Message[]>((observer) => {
       this.socket.emit(
-        '/chat/retrieveMessages', conversationId,
+        'retrieveMessages', conversationId,
         (response: Message[]) => {
           if (isServerError(response)) {
             observer.error(response);
@@ -92,15 +92,15 @@ export class ChatService {
   }
   
   startRecording(input: StartRecordingData) {
-    this.socket.emit('/chat/startRecording', input);
+    this.socket.emit('startRecording', input);
   }
 
   receiveAudioChunk(audioChunk: string) {
-    this.socket.emit('/chat/receiveAudioChunk', audioChunk);
+    this.socket.emit('receiveAudioChunk', audioChunk);
   }
 
   stopRecording() {
-    this.socket.emit('/chat/stopRecordingSendMessage');
+    this.socket.emit('stopRecordingSendMessage');
     return new Observable<string>((observer) => {
       this.socket.emit(
         'stopRecording',
@@ -119,7 +119,7 @@ export class ChatService {
   sendMessage(conversationId: number, messageText: string) {
     return new Observable<Message>((observer) => {
       this.socket.emit(
-        '/chat/sendMessage', conversationId, messageText,
+        'sendMessage', conversationId, messageText,
         (response: Message) => {
           if (isServerError(response)) {
             observer.error(response);

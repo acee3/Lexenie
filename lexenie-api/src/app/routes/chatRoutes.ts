@@ -9,17 +9,13 @@ export default async function getChatRouter() {
   chatRouter.post('/createConversation', authorizeToken, createConversation);
   chatRouter.post('/deleteConversation', authorizeToken, deleteConversation);
 
-  io.engine.use(authorizeTokenWebsocket);
-  io.on("connection", (socket) => {
-    if (!isAuthUserInfoRequest(socket.request))
-      throw new Error("Socket request does not contain user id");
-    socket.data.userId = socket.request.userId;
-
+  io.use(authorizeTokenWebsocket)
+  .on("connection", (socket) => {
     socket.data.audioChunks = {waveData: {sampleRate: null, numberChannels: null, bytesPerSample: null}, chunks: [] as string[]};
     socket.data.conversationBatchNumber = 0;
     socket.data.currentConversationId = null;
     socket.data.messageBatchNumber = 0;
-
+    
     getConversations(socket);
     retrieveMessages(socket);
     startRecording(socket);

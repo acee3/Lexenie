@@ -6,21 +6,6 @@ import { NgOptimizedImage } from '@angular/common';
 import { ChatService, Conversation } from '../../core/chat.service';
 import { Router } from '@angular/router';
 
-// interface Message {
-//   messageId: number;
-//   conversationId: number;
-//   userId: number;
-//   messageText: string;
-//   createdAt: Date;
-//   translation?: string;
-// }
-
-// interface Conversation {
-//   conversationId: number;
-//   title: string;
-//   messages: Message[];
-// }
-
 
 @Component({
   selector: 'chat-page',
@@ -31,23 +16,23 @@ import { Router } from '@angular/router';
 export class ChatPageComponent {
   constructor(private chatService: ChatService, private router: Router) {
     try {
-      chatService.connectErrorObservable().subscribe({
+      this.chatService.connectErrorObservable().subscribe({
         next: (error) => {
-          alert("B" + error.message);
-          console.log(error);
+          console.error(error);
           // this.router.navigate(['/auth/login']);
         }
       });
 
-      chatService.errorObservable().subscribe({
+      this.chatService.errorObservable().subscribe({
         next: (error) => {
           if (error.name === 'UnknownError')
-            alert("b")
+            console.error('Unknown error');
             // this.router.navigate(['/auth/login']);
         }
       });
 
-      chatService.connect();
+      this.chatService.connect();
+      
       this.chatService.getConversations().subscribe({
         next: (conversations) => {
           alert('Got conversations ' + conversations);

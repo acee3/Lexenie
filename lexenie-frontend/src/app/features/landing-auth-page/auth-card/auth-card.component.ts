@@ -14,6 +14,7 @@ import { AuthService } from '../../../core/auth.service';
 })
 export class AuthCardComponent {
   constructor(private authService: AuthService, private router: Router) {
+    console.log("IS LOGGED IN: ", this.authService.isLoggedIn());
     if (this.authService.isLoggedIn()) {
       this.router.navigate(['chat']);
     }
