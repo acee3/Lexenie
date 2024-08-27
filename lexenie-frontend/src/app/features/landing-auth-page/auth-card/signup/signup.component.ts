@@ -36,7 +36,6 @@ export class SignupComponent {
       this.authService.createUser(this.signup.value.username, this.signup.value.password, this.signup.value.email)
       .subscribe({
         next: (result) => {
-          alert('User created successfully ' + result);
           this.router.navigate(['/chat']);
         },
         error: (err) => {

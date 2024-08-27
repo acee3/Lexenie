@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { botResponse, transcribe, query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID } from '../index.js';
+import { botResponse, transcribe, query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, insertQuery } from '../index.js';
 import { LanguageData, MessageData, CountData, Language, OutputMessage, IdData, ConversationData, OutputConversation, OutputError } from '../lib/types.js';
 import { AudioChunkSentBeforeStartRecordingError, AudioNotRecordedError, BackendError, DeletedFileDoesNotExistError, QueryError, UnknownError } from '../lib/errors.js';
 import { Socket } from 'socket.io';
@@ -19,9 +19,14 @@ const createConversation = async (req: Request, res: Response, next: NextFunctio
     return;
   }
   
-  await query(`INSERT INTO ${CONVERSATION_TABLE_NAME} (name, language, start_time, last_time, user_id) VALUES (?, ?, ?, ?, ?)`, [name, language, startTime, startTime, userId.toString()]);
-  
-  res.status(200).send("Conversation created.");
+  const conversationId = await insertQuery(`INSERT INTO ${CONVERSATION_TABLE_NAME} (name, language, start_time, last_time, user_id) VALUES (?, ?, ?, ?, ?)`, [name, language, startTime, startTime, userId.toString()]);
+  const conversation: OutputConversation = {
+    conversationId: conversationId,
+    name: name,
+    lastTime: new Date(startTime)
+  };
+
+  res.status(200).send(conversation);
 };
 
 const getConversations = async (socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>) => {
@@ -183,6 +188,9 @@ const sendMessage = async (socket: Socket<ClientToServerEvents, ServerToClientEv
       if (conversationExists[0].count == 0)
         throw new QueryError("Conversation ID does not exist in database");
   
+
+      // TODO: change the two inserts to insertQuery and send both messageIds (incoming and outgoing)
+
       await query(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at) VALUES (?, ?, ?, ?, ?)`, [conversationId.toString(), userId.toString(), messageText, createdAt]);
   
       const prevMessages = await query<MessageData>(`SELECT * FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ? AND is_complete = TRUE ORDER BY created_at ASC LIMIT 32`, [conversationId.toString()]);

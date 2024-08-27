@@ -3,31 +3,47 @@ import { FormsModule } from '@angular/forms';
 import { TextBubbleComponent } from '../../shared/components/text-bubble/text-bubble.component';
 import { CoolButtonComponent } from '../../shared/components/cool-button/cool-button.component';
 import { NgOptimizedImage } from '@angular/common';
-import { ChatService, Conversation } from '../../core/chat.service';
+import { ChatService, Conversation, Language } from '../../core/chat.service';
 import { Router } from '@angular/router';
+import { ModalComponent } from '../../shared/components/modal/modal.component';
+import { AuthService } from '../../core/auth.service';
 
 
 @Component({
   selector: 'chat-page',
   standalone: true,
-  imports: [FormsModule, TextBubbleComponent, CoolButtonComponent, NgOptimizedImage],
+  imports: [FormsModule, TextBubbleComponent, CoolButtonComponent, NgOptimizedImage, ModalComponent],
   templateUrl: './chat-page.component.html'
 })
 export class ChatPageComponent {
-  constructor(private chatService: ChatService, private router: Router) {
+  isConversationModalVisible: boolean = false;
+
+  constructor(private chatService: ChatService, private router: Router, private authService: AuthService) {
     try {
       this.chatService.connectErrorObservable().subscribe({
         next: (error) => {
           console.error(error);
-          // this.router.navigate(['/auth/login']);
+          this.authService.logout();
+          this.router.navigate(['/auth/login']);
         }
       });
 
       this.chatService.errorObservable().subscribe({
         next: (error) => {
-          if (error.name === 'UnknownError')
+          console.warn(error);
+          if (error.name === 'UnknownError') {
             console.error('Unknown error');
-            // this.router.navigate(['/auth/login']);
+            this.authService.logout();
+            this.router.navigate(['/auth/login']);
+          }
+        }
+      });
+
+      this.chatService.disconnectObservable().subscribe({
+        next: (reason) => {
+          console.warn('Socket disconnected:', reason);
+          this.authService.logout();
+          this.router.navigate(['/auth/login']);
         }
       });
 
@@ -35,19 +51,19 @@ export class ChatPageComponent {
       
       this.chatService.getConversations().subscribe({
         next: (conversations) => {
-          alert('Got conversations ' + conversations);
           this.conversations = conversations;
           this.selectedConversation = this.conversations[0];
         },
         error: (err) => {
-          alert('Error getting conversations ' + err);
           throw new Error('Error getting conversations');
         }
       });
     } catch (e) {
-      alert('Error getting conversations ' + e);
+      console.error(e);
+      this.router.navigate(['/auth/login']);
     }
   }
+
 
   @ViewChild('chatBox') chatBox?: ElementRef<HTMLDivElement>;
 
@@ -69,6 +85,39 @@ export class ChatPageComponent {
 
   selectedConversation: Conversation = this.conversations[0];
   newMessage: string = '';
+
+  flipIsConversationModalVisible() {
+    this.isConversationModalVisible = !this.isConversationModalVisible;
+  }
+  openConversationModal() {
+    this.isConversationModalVisible = true;
+  }
+  newConversationName: string = '';
+  newConversationLanguage: Language = 'English';
+  languages: string[] = ["English", "Spanish", "French", "German", "Italian", "Mandarin", "Cantonese", "Japanese"];
+  createConversation() {
+    if (this.newConversationName.trim() && this.newConversationLanguage.trim()) {
+      this.chatService.createConversation(this.newConversationName, this.newConversationLanguage).subscribe({
+        next: (response) => {
+          console.log(response);
+          let conversation: Conversation = {
+            conversationId: response.conversationId,
+            name: response.name,
+            lastTime: response.lastTime
+          };
+          this.conversations.push(conversation);
+          this.selectedConversation = conversation;
+          this.newConversationName = '';
+          this.newConversationLanguage = 'English';
+          this.flipIsConversationModalVisible();
+        },
+        error: (err) => {
+          console.log(err);
+          throw new Error('Error creating conversation');
+        }
+      });
+    }
+  }
 
   selectConversation(conversation: Conversation) {
     this.selectedConversation = conversation;
@@ -111,8 +160,8 @@ export class ChatPageComponent {
 
 
   sendMessage() {
-    console.log(this.chatService.isConnected());
     if (this.newMessage.trim() && this.selectedConversation) {
+      this.chatService.sendMessage(this.selectedConversation.conversationId, this.newMessage);
       // this.selectedConversation.messages.push({
       //   messageId: this.selectedConversation.messages.length * -1 - 1,
       //   conversationId: this.selectedConversation.conversationId,

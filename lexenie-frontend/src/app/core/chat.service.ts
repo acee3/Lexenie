@@ -43,6 +43,14 @@ export class ChatService {
     });
   }
 
+  disconnectObservable() {
+    return new Observable<any>((observer) => {
+      this.socket.on('disconnect', (reason: string) => {
+        observer.next(reason);
+      });
+    });
+  }
+
   connect() {
     this.socket.connect();
   }
@@ -52,11 +60,11 @@ export class ChatService {
   }
 
   createConversation(name: string, language: Language) {
-    this.http.post(`${this.apiUrl}/createConversation`, { name: name, language: language });
+    return this.http.post<Conversation>(`${this.apiUrl}/createConversation`, { name: name, language: language });
   }
 
   deleteConversation(conversationId: number) {
-    this.http.post(`${this.apiUrl}/deleteConversation`, { conversationId: conversationId });
+    return this.http.post(`${this.apiUrl}/deleteConversation`, { conversationId: conversationId });
   }
 
   getConversations() {

@@ -1,5 +1,5 @@
 import mysql, { PoolOptions, RowDataPacket } from "mysql2";
-import { Pool } from "mysql2/promise";
+import { Pool, ResultSetHeader } from "mysql2/promise";
 import { SetupError, UnknownError, QueryError } from "../lib/errors.js";
 import dotenv from 'dotenv';
 dotenv.config();
@@ -51,6 +51,16 @@ export default class Database {
     try {
       const [rows, _] = await Database.promisePool.query<T[]>(sql, args);
       return rows;
+    } catch (error) {
+      if (!(error instanceof Error)) throw new UnknownError();
+      throw new QueryError(error.message);
+    }
+  }
+
+  async insertQuery(sql: string, args: string[]): Promise<number> {
+    try {
+      const [result, _] = await Database.promisePool.query<ResultSetHeader>(sql, args);
+      return result.insertId;
     } catch (error) {
       if (!(error instanceof Error)) throw new UnknownError();
       throw new QueryError(error.message);

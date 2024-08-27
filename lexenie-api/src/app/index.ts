@@ -15,7 +15,7 @@ import handleErrors from './middlewares/errorHandler.js';
 const app = express();
 
 const db: Database = new Database();
-const { query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID } = db;
+const { query, insertQuery, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID } = db;
 await query<CountData>('SELECT 1', []);  // Test connection and continue pool
 
 const httpServer = createServer(app);
@@ -37,5 +37,5 @@ app.use('/auth', authRoute);
 
 app.use(handleErrors);
 
-export { io, botResponse, transcribe, query, generateToken, verifyToken, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, expiresIn };
+export { io, botResponse, transcribe, query, insertQuery, generateToken, verifyToken, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, expiresIn };
 export default httpServer;

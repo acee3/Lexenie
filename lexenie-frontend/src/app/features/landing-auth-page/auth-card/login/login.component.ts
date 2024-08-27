@@ -33,7 +33,6 @@ export class LoginComponent {
       this.authService.login(this.login.value.email, this.login.value.password)
       .subscribe({
         next: (result) => {
-          alert('User logged in successfully ' + result);
           this.router.navigate(['/chat']);
         },
         error: (err) => {
