@@ -21,9 +21,9 @@
 
   <div class="flex-1 flex flex-col bg-secondary-sub relative">
     <div #chatBox class="flex-1 p-4 flex-col overflow-y-auto pb-28">
-      <!-- @for (message of selectedConversation.messages; track message.messageId) {
+      @for (message of messages; track message.messageId) {
         <text-bubble [isUser]="message.userId !== 1" [text]="message.messageText"/>
-      } -->
+      }
     </div>
 
     <div class="p-6 bg-transparent flex flex-row gap-2 absolute bottom-0 right-0 w-full">

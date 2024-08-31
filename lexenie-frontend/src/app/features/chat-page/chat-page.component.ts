@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TextBubbleComponent } from '../../shared/components/text-bubble/text-bubble.component';
 import { CoolButtonComponent } from '../../shared/components/cool-button/cool-button.component';
 import { NgOptimizedImage } from '@angular/common';
-import { ChatService, Conversation, Language } from '../../core/chat.service';
+import { ChatService, Conversation, Language, Message } from '../../core/chat.service';
 import { Router } from '@angular/router';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { AuthService } from '../../core/auth.service';
@@ -52,7 +52,12 @@ export class ChatPageComponent {
       this.chatService.getConversations().subscribe({
         next: (conversations) => {
           this.conversations = conversations;
+          if (this.conversations.length == 0)
+            return;
           this.selectedConversation = this.conversations[0];
+          console.log(this.selectedConversation.name);
+          this.retrieveMessages(this.selectedConversation);
+          console.log
         },
         error: (err) => {
           throw new Error('Error getting conversations');
@@ -83,8 +88,7 @@ export class ChatPageComponent {
 
   conversations: Conversation[] = [];
 
-  selectedConversation: Conversation = this.conversations[0];
-  newMessage: string = '';
+  selectedConversation: Conversation | null = null;
 
   flipIsConversationModalVisible() {
     this.isConversationModalVisible = !this.isConversationModalVisible;
@@ -107,6 +111,7 @@ export class ChatPageComponent {
           };
           this.conversations.push(conversation);
           this.selectedConversation = conversation;
+          this.retrieveMessages(conversation);
           this.newConversationName = '';
           this.newConversationLanguage = 'English';
           this.flipIsConversationModalVisible();
@@ -121,6 +126,22 @@ export class ChatPageComponent {
 
   selectConversation(conversation: Conversation) {
     this.selectedConversation = conversation;
+    this.retrieveMessages(conversation);
+  }
+
+
+  messages: Message[] = [];
+
+  retrieveMessages(conversation: Conversation) {
+    this.chatService.retrieveMessages(conversation.conversationId).subscribe({
+      next: (messages) => {
+        this.messages = messages;
+        console.log(messages);
+      },
+      error: (err) => {
+        throw new Error('Error retrieving messages');
+      }
+    });
   }
 
 
@@ -159,7 +180,11 @@ export class ChatPageComponent {
   }
 
 
+
+  newMessage: string = '';
+
   sendMessage() {
+    console.log(this.messages);
     if (this.newMessage.trim() && this.selectedConversation) {
       this.chatService.sendMessage(this.selectedConversation.conversationId, this.newMessage);
       // this.selectedConversation.messages.push({

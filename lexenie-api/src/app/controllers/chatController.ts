@@ -26,6 +26,12 @@ const createConversation = async (req: Request, res: Response, next: NextFunctio
     lastTime: new Date(startTime)
   };
 
+  // Add starting text from bot
+  const initialText = await botResponse(language, [], "");
+  const initialCreatedAt: string = new Date().toISOString().substring(0, 23);
+  await query(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at) VALUES (?, ?, ?, ?)`, [conversationId.toString(), BOT_USER_ID, initialText, initialCreatedAt]);
+  console.log("Initial text added to conversation: " + initialText);
+
   res.status(200).send(conversation);
 };
 
@@ -34,7 +40,7 @@ const getConversations = async (socket: Socket<ClientToServerEvents, ServerToCli
     try {
       const userId: number = socket.data.userId;
       const conversationBatchNumber = socket.data.conversationBatchNumber;
-      const conversations = await query<ConversationData>(`SELECT * FROM ${CONVERSATION_TABLE_NAME} WHERE user_id = ? ORDER BY last_time ASC LIMIT 16 OFFSET ${conversationBatchNumber * 16}`, [userId.toString()]);
+      const conversations = await query<ConversationData>(`SELECT * FROM ${CONVERSATION_TABLE_NAME} WHERE user_id = ? ORDER BY last_time DESC LIMIT 16 OFFSET ${conversationBatchNumber * 16}`, [userId.toString()]);
       const response: OutputConversation[] = conversations.map(conversation => {
         return {
           conversationId: conversation.conversation_id,
@@ -191,7 +197,7 @@ const sendMessage = async (socket: Socket<ClientToServerEvents, ServerToClientEv
 
       // TODO: change the two inserts to insertQuery and send both messageIds (incoming and outgoing)
 
-      await query(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at) VALUES (?, ?, ?, ?, ?)`, [conversationId.toString(), userId.toString(), messageText, createdAt]);
+      await query(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at) VALUES (?, ?, ?, ?)`, [conversationId.toString(), userId.toString(), messageText, createdAt]);
   
       const prevMessages = await query<MessageData>(`SELECT * FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ? AND is_complete = TRUE ORDER BY created_at ASC LIMIT 32`, [conversationId.toString()]);
       const languageRows = await query<LanguageData>(`SELECT language FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
