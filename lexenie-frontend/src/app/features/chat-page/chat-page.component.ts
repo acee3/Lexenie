@@ -2,7 +2,7 @@ import { Component, ElementRef, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TextBubbleComponent } from '../../shared/components/text-bubble/text-bubble.component';
 import { CoolButtonComponent } from '../../shared/components/cool-button/cool-button.component';
-import { NgOptimizedImage } from '@angular/common';
+import { NgClass, NgOptimizedImage } from '@angular/common';
 import { ChatService, Conversation, Language, Message } from '../../core/chat.service';
 import { Router } from '@angular/router';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
@@ -12,7 +12,7 @@ import { AuthService } from '../../core/auth.service';
 @Component({
   selector: 'chat-page',
   standalone: true,
-  imports: [FormsModule, TextBubbleComponent, CoolButtonComponent, NgOptimizedImage, ModalComponent],
+  imports: [FormsModule, TextBubbleComponent, CoolButtonComponent, NgOptimizedImage, ModalComponent, NgClass],
   templateUrl: './chat-page.component.html'
 })
 export class ChatPageComponent {
@@ -135,10 +135,13 @@ export class ChatPageComponent {
   retrieveMessages(conversation: Conversation) {
     this.chatService.retrieveMessages(conversation.conversationId).subscribe({
       next: (messages) => {
+        messages.sort((a, b) => {
+          return a.messageId - b.messageId;
+        });
         this.messages = messages;
         console.log(messages);
       },
-      error: (err) => {
+      error: (_) => {
         throw new Error('Error retrieving messages');
       }
     });
@@ -180,21 +183,37 @@ export class ChatPageComponent {
   }
 
 
-
   newMessage: string = '';
+  tempMessageId: number = -1;
 
   sendMessage() {
-    console.log(this.messages);
-    if (this.newMessage.trim() && this.selectedConversation) {
-      this.chatService.sendMessage(this.selectedConversation.conversationId, this.newMessage);
-      // this.selectedConversation.messages.push({
-      //   messageId: this.selectedConversation.messages.length * -1 - 1,
-      //   conversationId: this.selectedConversation.conversationId,
-      //   userId: 2,
-      //   messageText: this.newMessage,
-      //   createdAt: new Date()
-      // });
-      // this.newMessage = '';
+    if (!this.newMessage.trim()) {
+      alert('Message cannot be empty');
+      return;
     }
+    if (!this.selectedConversation) {
+      alert('No conversation selected');
+      return;
+    }
+
+    // The messageId is set to -1 because the actual messageId will be set by the server
+    const newMessage: Message = {
+      messageId: this.tempMessageId,
+      conversationId: this.selectedConversation.conversationId,
+      userId: this.authService.getUserId(),
+      messageText: this.newMessage,
+      createdAt: new Date()
+    };
+    this.tempMessageId -= 1;
+    this.messages.push(newMessage);
+
+    const messageText = this.newMessage;
+    this.newMessage = '';
+
+    this.chatService.sendMessage(this.selectedConversation.conversationId, messageText).subscribe({
+      next: (message) => {
+        this.messages.push(message);
+      }
+    });
   }
 }

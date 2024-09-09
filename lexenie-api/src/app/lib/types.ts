@@ -61,7 +61,6 @@ interface MessageData extends RowDataPacket {
   user_id: number;
   message_text: string;
   created_at: Date;
-  is_complete: boolean;
 }
 
 interface UserData extends RowDataPacket {

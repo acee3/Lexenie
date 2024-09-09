@@ -16,6 +16,7 @@ export class AuthService {
     const expiresAt = moment().add(authResult.expiresIn, 'second');
     this.storageService.set('id_token', authResult.idToken);
     this.storageService.set("expires_at", JSON.stringify(expiresAt.valueOf()));
+    this.storageService.set("user_id", authResult.userId.toString());
   }
 
   createUser(username: string, password: string, email: string) {
@@ -70,9 +71,19 @@ export class AuthService {
       return moment();
     }
   }
+
+  getUserId() {
+    const userId = this.storageService.get("user_id");
+    if (userId) {
+      return parseInt(userId);
+    } else {
+      return -1;
+    }
+  }
 }
 
 interface AuthResult {
   idToken: string;
   expiresIn: number;
+  userId: number;
 }

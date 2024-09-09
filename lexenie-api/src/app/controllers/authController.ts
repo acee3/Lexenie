@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { botResponse, query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, generateToken, expiresIn } from '../index.js';
+import { botResponse, query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, generateToken, expiresIn, insertQuery } from '../index.js';
 import { BackendError, UnknownError, ConflictError, UnauthorizedError, NotFoundError } from '../lib/errors.js';
 import { CountData, UserData } from '../lib/types.js';
 import bcrypt from 'bcrypt';
@@ -20,13 +20,14 @@ const createUser = async (req: Request, res: Response, next: NextFunction) => {
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  await query(`INSERT INTO ${USER_TABLE_NAME} (username, password_hash, email, created_at) VALUES (?, ?, ?, ?)`, [username, hashedPassword, email, createdAt]);
+  const userId = await insertQuery(`INSERT INTO ${USER_TABLE_NAME} (username, password_hash, email, created_at) VALUES (?, ?, ?, ?)`, [username, hashedPassword, email, createdAt]);
 
   const token = generateToken({ username: username });
 
   res.status(201).json({
     idToken: token,
-    expiresIn: expiresIn
+    expiresIn: expiresIn,
+    userId: userId
   });
 }
 
@@ -51,7 +52,8 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
   const token = generateToken({ username: user.username });
   res.status(200).json({
     idToken: token,
-    expiresIn: expiresIn
+    expiresIn: expiresIn,
+    userId: user.user_id
   });
 }
 

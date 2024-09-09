@@ -11,7 +11,10 @@
     @for (conversation of conversations; track conversation.conversationId) {
       <div
         (click)="selectConversation(conversation)"
-        class="p-2 mb-2 w-full bg-white rounded cursor-pointer hover:bg-gray-100"
+        class="p-2 mb-2 w-full rounded cursor-pointer bg-white hover:bg-gray-100"
+        [ngClass]="{ 
+          'border-primary-80 border-4': conversation.conversationId === selectedConversation?.conversationId
+        }"
       >
         {{ conversation.name }}
       </div>

@@ -16,6 +16,7 @@ export class ChatService {
   ) {
     this.socket.on('connect', () => {
       console.log('Socket connected');
+      
     });
 
     this.socket.on('connect_error', (error: any) => {

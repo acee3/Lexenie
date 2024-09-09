@@ -30,7 +30,6 @@ const createConversation = async (req: Request, res: Response, next: NextFunctio
   const initialText = await botResponse(language, [], "");
   const initialCreatedAt: string = new Date().toISOString().substring(0, 23);
   await query(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at) VALUES (?, ?, ?, ?)`, [conversationId.toString(), BOT_USER_ID, initialText, initialCreatedAt]);
-  console.log("Initial text added to conversation: " + initialText);
 
   res.status(200).send(conversation);
 };
@@ -69,7 +68,7 @@ const retrieveMessages = async (socket: Socket<ClientToServerEvents, ServerToCli
         socket.data.currentConversationId = conversationId;
       }
       const batchNumber = socket.data.messageBatchNumber;
-      const prevMessages = await query<MessageData>(`SELECT * FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ? ORDER BY created_at ASC LIMIT 16 OFFSET ${batchNumber * 16}`, [conversationId.toString()]);
+      const prevMessages = await query<MessageData>(`SELECT * FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ? ORDER BY created_at DESC LIMIT 16 OFFSET ${batchNumber * 16}`, [conversationId.toString()]);
       const response: OutputMessage[] = prevMessages.map(message => {
         return {
           messageId: message.message_id,
@@ -194,18 +193,21 @@ const sendMessage = async (socket: Socket<ClientToServerEvents, ServerToClientEv
       if (conversationExists[0].count == 0)
         throw new QueryError("Conversation ID does not exist in database");
   
-
-      // TODO: change the two inserts to insertQuery and send both messageIds (incoming and outgoing)
-
       await query(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at) VALUES (?, ?, ?, ?)`, [conversationId.toString(), userId.toString(), messageText, createdAt]);
   
-      const prevMessages = await query<MessageData>(`SELECT * FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ? AND is_complete = TRUE ORDER BY created_at ASC LIMIT 32`, [conversationId.toString()]);
+      const prevMessages = await query<MessageData>(`SELECT * FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ? AND conversation_id IS NOT NULL AND user_id IS NOT NULL AND message_text IS NOT NULL AND message_text <> '' ORDER BY created_at ASC LIMIT 32`, [conversationId.toString()]);
       const languageRows = await query<LanguageData>(`SELECT language FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
       const language = languageRows.length > 0 ? languageRows[0].language : "English";
       const responseText = await botResponse(language, prevMessages, messageText);
       const responseCreatedAt: string = new Date().toISOString().substring(0, 23);
+
+
+      // ADD AUDIO FILE PATH LOGIC
       const responseAudioFilePath: string = `${BOT_USER_ID}/${conversationId}/${responseCreatedAt}.wav`;
-      const messageId = (await query<IdData>(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at, audio_file_path) VALUES (?, ?, ?, ?, ?); SELECT LAST_INSERT_ID();`, [conversationId.toString(), BOT_USER_ID, responseText, responseCreatedAt, responseAudioFilePath]))[0].id;
+
+
+
+      const messageId = await insertQuery(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at) VALUES (?, ?, ?, ?);`, [conversationId.toString(), BOT_USER_ID, responseText, responseCreatedAt]);
       callback({
         messageId: messageId,
         conversationId: conversationId,

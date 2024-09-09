@@ -17,7 +17,7 @@ async function botResponse(language: string, prevMessages: MessageData[], messag
   try {
     const params: OpenAI.Chat.ChatCompletionCreateParamsNonStreaming = {
       messages: messages,
-      model: "gpt-4o",
+      model: "gpt-3.5-turbo-0125",
     }
     const completion = await openai.chat.completions.create(params);
     if (completion.choices[0].message.content == undefined)
