@@ -3,12 +3,13 @@ import { HttpClient } from '@angular/common/http';
 import { Socket, io } from 'socket.io-client';
 import { Observable, Subject } from 'rxjs';
 import { ServerError, SOCKET } from './socket.service.provider';
+import { environment } from '../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ChatService {
-  private apiUrl = 'http://localhost:3306/chat';
+  private apiUrl = environment.backendUrl + "/chat";
 
   constructor(
     private http: HttpClient, 

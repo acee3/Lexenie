@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "C/C++ Runner: Debug Session",
+      "type": "lldb",
+      "request": "launch",
+      "args": [],
+      "cwd": "/Users/acheung/Documents/GitHub/Lexenie/lexenie-api/src/app/setup",
+      "program": "/Users/acheung/Documents/GitHub/Lexenie/lexenie-api/src/app/setup/build/Debug/outDebug"
+    }
+  ]
+}

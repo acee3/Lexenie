@@ -33,8 +33,8 @@ module.exports = {
         }
       },
       animation: {
-        slideLeft: 'slideLeft 60s linear infinite',
-        slideRight: 'slideRight 60s linear infinite',
+        slideLeft: 'slideLeft 360s linear infinite',
+        slideRight: 'slideRight 360s linear infinite',
       },
       boxShadow: {
         'button-theme': '0 2px 25px 5px rgba(255, 100, 100, 0.9)',

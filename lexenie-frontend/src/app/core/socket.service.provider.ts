@@ -1,16 +1,16 @@
 import { InjectionToken } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { BrowserStorageService } from './storage.service';
+import { environment } from '../../environments/environment';
 
 export const SOCKET = new InjectionToken<Socket>('SocketToken');
 
 function socketFactory(storageService: BrowserStorageService): Socket {
   const idToken = storageService.get('id_token');
   
-  const socket = io("http://localhost:3306", {
-  // const socket = io("127.0.0.1:3306", {
-  // const socket = io("173.63.37.43:3306", {
-    // path: '/socket.io',
+  const apiUrl = environment.backendUrl;
+  
+  const socket = io(apiUrl, {
     reconnection: false,
     autoConnect: false,
     extraHeaders: {
