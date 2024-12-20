@@ -1,24 +1,34 @@
 <div class="flex h-screen">
-  <div class="overflow-y-scroll w-1/6 p-4 min-w-fit bg-secondary-100">
-    <h2 class="text-xl font-bold mb-4">Conversations</h2>
-    <button
-      (click)="openConversationModal()"
-      class="p-2 px-4 mb-4 w-full bg-primary-80 text-white rounded hover:bg-primary-100"
-    >
-      Add Conversation
-    </button>
-
-    @for (conversation of conversations; track conversation.conversationId) {
-      <div
-        (click)="selectConversation(conversation)"
-        class="p-2 mb-2 w-full rounded cursor-pointer bg-white hover:bg-gray-100"
-        [ngClass]="{ 
-          'border-primary-80 border-4': conversation.conversationId === selectedConversation?.conversationId
-        }"
+  <div class="w-1/6 min-w-fit bg-secondary-100 flex flex-col h-screen">
+    <div class="overflow-y-scroll flex-1 p-4">
+      <h2 class="text-xl font-bold mb-4">Conversations</h2>
+      <button
+        (click)="openConversationModal()"
+        class="p-2 px-4 mb-4 w-full bg-primary-80 text-white rounded hover:bg-primary-100"
       >
-        {{ conversation.name }}
-      </div>
-    }
+        Add Conversation
+      </button>
+
+      @for (conversation of conversations; track conversation.conversationId) {
+        <div
+          (click)="selectConversation(conversation)"
+          class="p-2 mb-2 w-full rounded cursor-pointer bg-white hover:bg-gray-100"
+          [ngClass]="{ 
+            'border-primary-80 border-4': conversation.conversationId === selectedConversation?.conversationId
+          }"
+        >
+          {{ conversation.name }}
+        </div>
+      }
+    </div>
+    <div class="flex justify-center items-center mt-1">
+      <button
+        (click)="logout()"
+        class="p-2 px-4 w-full bg-textColor-80 text-textColorOpposite-100 hover:bg-textColor-100"
+      >
+        Log Out
+      </button>
+    </div>
   </div>
 
 

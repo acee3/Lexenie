@@ -69,6 +69,11 @@ export class ChatPageComponent {
     }
   }
 
+  logout() {
+    this.authService.logout();
+    this.router.navigate(['/auth/login']);
+  }
+
 
   @ViewChild('chatBox') chatBox?: ElementRef<HTMLDivElement>;
 

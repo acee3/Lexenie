@@ -10,7 +10,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = environment + "/auth";
+  private apiUrl = environment.backendUrl + "/auth";
   constructor(private storageService: BrowserStorageService, private http: HttpClient) { }
 
   private setSession(authResult: AuthResult) {
