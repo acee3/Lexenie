@@ -1,5 +1,5 @@
 import Router from 'express-promise-router';
-import { createConversation, getConversations, retrieveMessages, startRecording, receiveAudioChunk, stopRecording, sendMessage, deleteConversation } from '../controllers/chatController.js';
+import { createConversation, getConversations, retrieveMessages, startRecording, receiveAudioChunk, stopRecording, sendMessage, deleteConversation, processFullAudio } from '../controllers/chatController.js';
 import { io } from '../index.js'
 import { authorizeToken, authorizeTokenWebsocket, isAuthUserInfoRequest } from '../middlewares/authMiddleware.js';
 
@@ -22,6 +22,7 @@ export default async function getChatRouter() {
     receiveAudioChunk(socket);
     stopRecording(socket);
     sendMessage(socket);
+    processFullAudio(socket);
   });
 
   return chatRouter;

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { TextBubbleComponent } from '../../shared/components/text-bubble/text-bubble.component';
 import { CoolButtonComponent } from '../../shared/components/cool-button/cool-button.component';
 import { NgClass, NgOptimizedImage } from '@angular/common';
-import { ChatService, Conversation, Language, Message } from '../../core/chat.service';
+import { audioMimeToExtension, ChatService, Conversation, Language, Message } from '../../core/chat.service';
 import { Router } from '@angular/router';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { AuthService } from '../../core/auth.service';
@@ -12,7 +12,7 @@ import { AuthService } from '../../core/auth.service';
 @Component({
   selector: 'chat-page',
   standalone: true,
-  imports: [FormsModule, TextBubbleComponent, CoolButtonComponent, NgOptimizedImage, ModalComponent, NgClass],
+  imports: [FormsModule, TextBubbleComponent, NgOptimizedImage, ModalComponent, NgClass],
   templateUrl: './chat-page.component.html'
 })
 export class ChatPageComponent {
@@ -153,10 +153,18 @@ export class ChatPageComponent {
   }
 
 
+  newMessage: string = '';
+  tempMessageId: number = -1;
+
   isRecording: boolean = false;
   mediaRecorder: MediaRecorder | null = null;
 
   async handleRecord() {
+    if (this.selectedConversation == null) {
+      alert('No conversation selected. Can\'t record audio.');
+      return;
+    }
+
     if (!navigator.mediaDevices) {
       alert('Recording audio is not supported in this browser.');
       return;
@@ -168,28 +176,46 @@ export class ChatPageComponent {
     
     if (this.isRecording) {
       this.mediaRecorder.stop();
-      this.mediaRecorder
       this.isRecording = false;
       return;
     }
 
+    this.messages.push({
+      messageId: this.tempMessageId,
+      conversationId: this.selectedConversation.conversationId,
+      userId: this.authService.getUserId(),
+      messageText: "...",
+      createdAt: new Date(),
+    });
+
     this.mediaRecorder.ondataavailable = (e) => {
-      console.log(e.data);
-      console.log(typeof e.data);
       const reader = new FileReader();
       reader.onload = () => {
-        const audioBlob = reader.result;
-        console.log(typeof audioBlob);
+        const audioBlob = reader.result as string;
+        const audioType = audioMimeToExtension.get(this.mediaRecorder?.mimeType);
+        if (audioType == undefined)
+          throw new Error('Unknown audio type');
+        
+        if (this.selectedConversation == null) {
+          alert('No conversation selected. Can\'t transcribe audio.');
+          return;
+        }
+        this.chatService.processFullAudio(this.selectedConversation.conversationId, audioBlob, audioType).subscribe({
+          next: (messagePair) => {
+            this.messages[this.messages.length - 1] = messagePair.inputMessage;
+            this.messages.push(messagePair.outputMessage);
+          },
+          error: (_) => {
+            throw new Error('Error retrieving messages');
+          }
+        });
       }
       reader.readAsDataURL(e.data);
+
     };
     this.mediaRecorder.start();
     this.isRecording = true;
   }
-
-
-  newMessage: string = '';
-  tempMessageId: number = -1;
 
   sendMessage() {
     if (!this.newMessage.trim()) {

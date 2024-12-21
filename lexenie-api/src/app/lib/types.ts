@@ -46,7 +46,12 @@ interface OutputMessage {
   createdAt: Date;
 }
 
-export { WaveData, StartRecordingData, WaveChunks, OutputConversation, OutputMessage };
+interface InputOutputMessage {
+  inputMessage: OutputMessage;
+  outputMessage: OutputMessage;
+}
+
+export { WaveData, StartRecordingData, WaveChunks, OutputConversation, OutputMessage, InputOutputMessage };
 
 
 // DATABASE TYPES

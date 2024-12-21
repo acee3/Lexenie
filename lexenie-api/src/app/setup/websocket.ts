@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 import http from 'http';
-import { OutputError, Option, OutputConversation, OutputMessage, StartRecordingData, WaveChunks } from '../lib/types.js';
+import { OutputError, Option, OutputConversation, OutputMessage, StartRecordingData, WaveChunks, InputOutputMessage } from '../lib/types.js';
 
 interface ServerToClientEvents {
   error: (error: OutputError) => void;
@@ -13,6 +13,7 @@ interface ClientToServerEvents {
   receiveAudioChunk: (audioChunk: string, callback: (response: string) => void) => void;
   stopRecording: (callback: (response: string) => void) => void;
   sendMessage: (conversationId: number, messageText: string, callback: (response: OutputMessage) => void) => void;
+  processFullAudio: (conversationId: number, audio: string, audioType: string, callback: (response: InputOutputMessage) => void) => void;
 }
 
 interface InterServerEvents {

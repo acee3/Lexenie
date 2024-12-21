@@ -1,11 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { botResponse, transcribe, query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, insertQuery } from '../index.js';
+import { botResponse, transcribe, transcribeBase64, query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, insertQuery } from '../index.js';
 import { LanguageData, MessageData, CountData, Language, OutputMessage, IdData, ConversationData, OutputConversation, OutputError } from '../lib/types.js';
 import { AudioChunkSentBeforeStartRecordingError, AudioNotRecordedError, BackendError, DeletedFileDoesNotExistError, QueryError, UnknownError } from '../lib/errors.js';
 import { Socket } from 'socket.io';
 import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from '../setup/websocket.js';
 import path from 'path';
 import fs from 'fs';
+import { Readable } from 'stream';
 
 const createConversation = async (req: Request, res: Response, next: NextFunction) => {
   const userId: number = req.body.userId;
@@ -226,6 +227,67 @@ const sendMessage = async (socket: Socket<ClientToServerEvents, ServerToClientEv
   });
 };
 
+const processFullAudio = async (socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>) => {
+  socket.on("processFullAudio", async (conversationId, audio, audioType, callback) => {
+    try {
+      if (socket.data.currentConversationId == null)
+        throw new AudioChunkSentBeforeStartRecordingError("Send message request sent before conversation ID was set.");
+
+      const userId: number = socket.data.userId;
+      const inputCreatedAt: string = new Date().toISOString().substring(0, 23);
+  
+      const conversationExists = await query<CountData>(`SELECT COUNT(*) AS count FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
+      if (conversationExists[0].count == 0)
+        throw new QueryError("Conversation ID does not exist in database");
+      
+      const inputText = await transcribeBase64(audio, audioType);
+
+      const inputMessageId = await insertQuery(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at) VALUES (?, ?, ?, ?)`, [conversationId.toString(), userId.toString(), inputText, inputCreatedAt]);
+
+      const inputMessage: OutputMessage = {
+        messageId: inputMessageId,
+        conversationId: conversationId,
+        userId: userId,
+        messageText: inputText,
+        createdAt: new Date(inputCreatedAt)
+      };
+
+      const prevMessages = await query<MessageData>(`SELECT * FROM ${MESSAGE_TABLE_NAME} WHERE conversation_id = ? AND conversation_id IS NOT NULL AND user_id IS NOT NULL AND message_text IS NOT NULL AND message_text <> '' ORDER BY created_at ASC LIMIT 32`, [conversationId.toString()]);
+      const languageRows = await query<LanguageData>(`SELECT language FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
+      const language = languageRows.length > 0 ? languageRows[0].language : "English";
+      const responseText = await botResponse(language, prevMessages, inputText);
+      const responseCreatedAt: string = new Date().toISOString().substring(0, 23);
+
+
+      // ADD AUDIO FILE PATH LOGIC
+      const responseAudioFilePath: string = `${BOT_USER_ID}/${conversationId}/${responseCreatedAt}.wav`;
+
+
+
+      const outputMessageId = await insertQuery(`INSERT INTO ${MESSAGE_TABLE_NAME} (conversation_id, user_id, message_text, created_at) VALUES (?, ?, ?, ?);`, [conversationId.toString(), BOT_USER_ID, responseText, responseCreatedAt]);
+      const outputMessage: OutputMessage = {
+        messageId: outputMessageId,
+        conversationId: conversationId,
+        userId: parseInt(BOT_USER_ID),
+        messageText: responseText,
+        createdAt: new Date(responseCreatedAt)
+      };
+
+      callback({
+        inputMessage: inputMessage,
+        outputMessage: outputMessage
+      });
+    } catch (error) {
+      if (error instanceof BackendError) {
+        socket.emit("error", { name: error.name, message: error.message, status: error.status } as OutputError);
+        return;
+      }
+      const unknownError = new UnknownError("An unknown error occurred when sending a message.");
+      socket.emit("error", { name: unknownError.name, message: unknownError.message, status: unknownError.status } as OutputError);
+    }
+  });
+}
+
 const deleteConversation = async (req: Request, res: Response) => {
   const conversationId = req.body.conversationId;
   await query(`DELETE FROM ${CONVERSATION_TABLE_NAME} WHERE conversation_id = ?`, [conversationId.toString()]);
@@ -233,4 +295,4 @@ const deleteConversation = async (req: Request, res: Response) => {
   res.status(200).send("Conversation deleted.");
 }
 
-export { createConversation, getConversations, retrieveMessages, startRecording, receiveAudioChunk, stopRecording, sendMessage, deleteConversation };
+export { createConversation, getConversations, retrieveMessages, startRecording, receiveAudioChunk, stopRecording, sendMessage, deleteConversation, processFullAudio };

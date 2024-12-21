@@ -141,6 +141,22 @@ export class ChatService {
       );
     });
   }
+
+  processFullAudio(conversationId: number, audio: string, audioType: string) {
+    return new Observable<{inputMessage: Message, outputMessage: Message}>((observer) => {
+      this.socket.emit(
+        'processFullAudio', conversationId, audio, audioType,
+        (response: {inputMessage: Message, outputMessage: Message}) => {
+          if (isServerError(response)) {
+            observer.error(response);
+            return;
+          }
+          observer.next(response);
+          observer.complete();
+        }
+      );
+    });
+  }
 }
 
 
@@ -185,3 +201,15 @@ export interface StartRecordingData {
   conversationId: number;
   waveData: WaveData;
 }
+
+export const audioMimeToExtension = new Map<string | undefined, string>([
+  ['audio/webm;codecs=opus', 'webm'],
+  ['audio/ogg;codecs=opus', 'ogg'],
+  ['audio/mp3', 'mp3'],
+  ['audio/mpeg', 'mp3'],
+  ['audio/wav', 'wav'],
+  ['audio/x-wav', 'wav'],
+  ['audio/flac', 'flac'],
+  ['audio/aac', 'aac'],
+  [undefined, 'webm']
+]);
