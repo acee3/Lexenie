@@ -30,6 +30,7 @@ interface StartRecordingData {
 interface WaveChunks {
   waveData: WaveData;
   chunks: string[];
+  prevAudioChunk: string;
 }
 
 interface OutputConversation {

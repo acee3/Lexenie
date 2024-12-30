@@ -7,6 +7,7 @@ import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketDa
 import path from 'path';
 import fs from 'fs';
 import { Readable } from 'stream';
+import { segmentAudioBase64 } from '../setup/modelSetup.js';
 
 const createConversation = async (req: Request, res: Response, next: NextFunction) => {
   const userId: number = req.body.userId;
@@ -122,12 +123,26 @@ const receiveAudioChunk = async (socket: Socket<ClientToServerEvents, ServerToCl
       if (conversationExists[0].count == 0) 
         throw new QueryError("Conversation ID does not exist in database");
 
-      const bytesPerSample = socket.data.audioChunks.waveData.bytesPerSample, sampleRate = socket.data.audioChunks.waveData.sampleRate, numberChannels = socket.data.audioChunks.waveData.numberChannels;
+      const bytesPerSample = socket.data.audioChunks.waveData.bytesPerSample, 
+            sampleRate = socket.data.audioChunks.waveData.sampleRate, 
+            numberChannels = socket.data.audioChunks.waveData.numberChannels;
       if (bytesPerSample == null || sampleRate == null || numberChannels == null)
         throw new AudioChunkSentBeforeStartRecordingError("Audio chunk sent before wave data was set.");
 
       socket.data.audioChunks.chunks.push(audioChunk);
-      callback("Audio chunk received.");
+
+
+      const segments = await segmentAudioBase64(audioChunk, sampleRate);
+      if (segments.length > 0) {
+        const prevAudioChunk = socket.data.audioChunks.prevAudioChunk;
+        socket.data.audioChunks.prevAudioChunk = segments[segments.length - 1];
+        segments.pop();
+        segments.unshift(prevAudioChunk);
+      }
+      const combinedSegments = segments.join('');
+      const chunkText = await transcribeBase64(combinedSegments, "wav");
+
+      callback(chunkText);
     } catch (error) {
       if (error instanceof BackendError) {
         socket.emit("error", { name: error.name, message: error.message, status: error.status } as OutputError);
@@ -149,27 +164,28 @@ const stopRecording = async (socket: Socket<ClientToServerEvents, ServerToClient
       const conversationId: number = socket.data.currentConversationId;
       const createdAt: string = new Date().toISOString().substring(0, 23);
       const audioFilePath: string = `${userId}/${conversationId}/${createdAt}.wav`;
-      const audioString = socket.data.audioChunks.chunks.join('');
-      if (audioString == undefined)
-        throw new AudioNotRecordedError("No audio string present, but recording was sent.");
-      const buffer = Buffer.from(
-        audioString,
-        'base64'
-      );
-      const localFilePath = path.join(__dirname, `${socket.data.userId}_temp.wav`);
-      fs.writeFileSync(localFilePath, buffer);
+      // const audioString = socket.data.audioChunks.chunks.join('');
+      // if (audioString == undefined)
+      //   throw new AudioNotRecordedError("No audio string present, but recording was sent.");
+      // const buffer = Buffer.from(
+      //   audioString,
+      //   'base64'
+      // );
+      // const localFilePath = path.join(__dirname, `${socket.data.userId}_temp.wav`);
+      // fs.writeFileSync(localFilePath, buffer);
       
-      const messageText: string = await transcribe(localFilePath);
-      socket.data.audioChunks = {waveData: {sampleRate: null, numberChannels: null, bytesPerSample: null}, chunks: [] as string[]};  // Reset for new recording to be started
+      // const messageText: string = await transcribe(localFilePath);
+      socket.data.audioChunks = {waveData: {sampleRate: null, numberChannels: null, bytesPerSample: null}, chunks: [] as string[], prevAudioChunk: ''};  // Reset for new recording to be started
 
-      callback(messageText);
+      // callback(messageText);
 
       // TODO: upload to s3
 
-      fs.unlink(localFilePath, (err) => {
-        if (err)
-          throw new DeletedFileDoesNotExistError("Attempted to delete a file that does not exist.");
-      });
+      // fs.unlink(localFilePath, (err) => {
+      //   if (err)
+      //     throw new DeletedFileDoesNotExistError("Attempted to delete a file that does not exist.");
+      // });
+      callback("Recording stopped.");
     } catch (error) {
       if (error instanceof BackendError) {
         socket.emit("error", { name: error.name, message: error.message, status: error.status } as OutputError);

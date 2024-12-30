@@ -7,6 +7,7 @@ import fs, { mkdtempSync, ReadStream, writeFileSync } from 'fs';
 import { tmpdir } from "os";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const hostedModelURL = "http://localhost:5000";
 
 async function botResponse(language: string, prevMessages: MessageData[], message: string): Promise<string> {
   const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [{ role: "system", content: `You are a friend conversing in ${language}` }];
@@ -68,4 +69,18 @@ async function transcribeBase64(base64: string, extension: string) {
   }
 }
 
-export { botResponse, transcribe, transcribeBase64 }
+async function segmentAudioBase64(base64: string, sampleRate: number) {
+  try {
+    const response = await fetch(`${hostedModelURL}/segment`, {
+      method: "POST",
+      body: JSON.stringify({ audio: base64, sample_rate: sampleRate }),
+    });
+    const json = (await response.json()) as { segments: string[] };
+    return json.segments;
+  } catch (error) {
+    if (!(error instanceof Error)) throw new UnknownError();
+    throw new BotResponseError(error.message);
+  }
+}
+
+export { botResponse, transcribe, transcribeBase64, segmentAudioBase64 }

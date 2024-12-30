@@ -106,11 +106,22 @@ export class ChatService {
   }
 
   receiveAudioChunk(audioChunk: string) {
-    this.socket.emit('receiveAudioChunk', audioChunk);
+    return new Observable<string>((observer) => {
+      this.socket.emit(
+        'receiveAudioChunk', audioChunk,
+        (response: string) => {
+          if (isServerError(response)) {
+            observer.error(response);
+            return;
+          }
+          observer.next(response);
+          observer.complete();
+        }
+      );
+    });
   }
 
   stopRecording() {
-    this.socket.emit('stopRecordingSendMessage');
     return new Observable<string>((observer) => {
       this.socket.emit(
         'stopRecording',

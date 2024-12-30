@@ -180,18 +180,28 @@ export class ChatPageComponent {
       return;
     }
 
-    this.messages.push({
-      messageId: this.tempMessageId,
+    // this.messages.push({
+    //   messageId: this.tempMessageId,
+    //   conversationId: this.selectedConversation.conversationId,
+    //   userId: this.authService.getUserId(),
+    //   messageText: "...",
+    //   createdAt: new Date(),
+    // });
+
+    this.chatService.startRecording({
       conversationId: this.selectedConversation.conversationId,
-      userId: this.authService.getUserId(),
-      messageText: "...",
-      createdAt: new Date(),
+      waveData: {
+        sampleRate: 22050,
+        numberChannels: 2,
+        bytesPerSample: 2
+      }
     });
 
     this.mediaRecorder.ondataavailable = (e) => {
       const reader = new FileReader();
       reader.onload = () => {
         const audioBlob = reader.result as string;
+        console.log(audioBlob);
         const audioType = audioMimeToExtension.get(this.mediaRecorder?.mimeType);
         if (audioType == undefined)
           throw new Error('Unknown audio type');
@@ -200,20 +210,30 @@ export class ChatPageComponent {
           alert('No conversation selected. Can\'t transcribe audio.');
           return;
         }
-        this.chatService.processFullAudio(this.selectedConversation.conversationId, audioBlob, audioType).subscribe({
-          next: (messagePair) => {
-            this.messages[this.messages.length - 1] = messagePair.inputMessage;
-            this.messages.push(messagePair.outputMessage);
+        this.chatService.receiveAudioChunk(audioBlob).subscribe({
+          next: (response) => {
+            this.newMessage += response;
           },
           error: (_) => {
-            throw new Error('Error retrieving messages');
+            throw new Error('Error sending audio chunk');
           }
         });
+        // this.chatService.processFullAudio(this.selectedConversation.conversationId, audioBlob, audioType).subscribe({
+        //   next: (messagePair) => {
+        //     this.messages[this.messages.length - 1] = messagePair.inputMessage;
+        //     this.messages.push(messagePair.outputMessage);
+        //   },
+        //   error: (_) => {
+        //     throw new Error('Error retrieving messages');
+        //   }
+        // });
       }
+      
       reader.readAsDataURL(e.data);
-
     };
-    this.mediaRecorder.start();
+
+    // Send audio chunks every 1s
+    this.mediaRecorder.start(1000);
     this.isRecording = true;
   }
 

@@ -1,7 +1,7 @@
 import express from 'express';
 import getChatRouter from './routes/chatRoutes.js';
 import Database from './setup/databaseSetup.js';
-import { botResponse, transcribe, transcribeBase64 } from './setup/modelSetup.js';
+import { botResponse, transcribe, transcribeBase64, segmentAudioBase64 } from './setup/modelSetup.js';
 import createWebsocket from './setup/websocket.js';
 import { createServer } from 'http';
 import cors from 'cors';
