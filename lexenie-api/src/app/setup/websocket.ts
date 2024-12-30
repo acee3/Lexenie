@@ -9,7 +9,7 @@ interface ServerToClientEvents {
 interface ClientToServerEvents {
   getConversations: (callback: (response: OutputConversation[]) => void) => void;
   retrieveMessages: (conversationId: number, callback: (response: OutputMessage[]) => void) => void;
-  startRecording: (input: StartRecordingData, callback: (response: string) => void) => void;
+  startRecording: (input: StartRecordingData) => void;
   receiveAudioChunk: (audioChunk: string, callback: (response: string) => void) => void;
   stopRecording: (callback: (response: string) => void) => void;
   sendMessage: (conversationId: number, messageText: string, callback: (response: OutputMessage) => void) => void;

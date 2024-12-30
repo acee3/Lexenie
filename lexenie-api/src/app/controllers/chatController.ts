@@ -93,13 +93,12 @@ const retrieveMessages = async (socket: Socket<ClientToServerEvents, ServerToCli
 };
 
 const startRecording = async (socket: Socket<ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData>) => {
-  socket.on("startRecording", async (input, callback) => {
+  socket.on("startRecording", async input => {
     try {
       const conversationId: number = input.conversationId;
       socket.data.currentConversationId = conversationId;
       const waveData = input.waveData;
       socket.data.audioChunks.waveData = waveData;
-      callback("Recording started.");
     } catch (error) {
       if (error instanceof BackendError) {
         socket.emit("error", { name: error.name, message: error.message, status: error.status } as OutputError);
@@ -131,7 +130,6 @@ const receiveAudioChunk = async (socket: Socket<ClientToServerEvents, ServerToCl
 
       socket.data.audioChunks.chunks.push(audioChunk);
 
-
       const segments = await segmentAudioBase64(audioChunk, sampleRate);
       if (segments.length > 0) {
         const prevAudioChunk = socket.data.audioChunks.prevAudioChunk;
@@ -141,7 +139,7 @@ const receiveAudioChunk = async (socket: Socket<ClientToServerEvents, ServerToCl
       }
       const combinedSegments = segments.join('');
       const chunkText = await transcribeBase64(combinedSegments, "wav");
-
+      
       callback(chunkText);
     } catch (error) {
       if (error instanceof BackendError) {

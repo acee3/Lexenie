@@ -7,6 +7,7 @@ import { audioMimeToExtension, ChatService, Conversation, Language, Message } fr
 import { Router } from '@angular/router';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { AuthService } from '../../core/auth.service';
+import { sample } from 'rxjs';
 
 
 @Component({
@@ -158,6 +159,9 @@ export class ChatPageComponent {
 
   isRecording: boolean = false;
   mediaRecorder: MediaRecorder | null = null;
+  SAMPLE_RATE = 16000;
+  CHANNELS = 1;
+  SAMPLE_SIZE_BITS = 16;
 
   async handleRecord() {
     if (this.selectedConversation == null) {
@@ -170,7 +174,8 @@ export class ChatPageComponent {
       return;
     }
     if (this.mediaRecorder == null) {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const constraints = { sampleRate: this.SAMPLE_RATE, channelCount: this.CHANNELS, sampleSize: this.SAMPLE_SIZE_BITS };
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
       this.mediaRecorder = new MediaRecorder(stream);
     }
     
@@ -191,16 +196,16 @@ export class ChatPageComponent {
     this.chatService.startRecording({
       conversationId: this.selectedConversation.conversationId,
       waveData: {
-        sampleRate: 22050,
-        numberChannels: 2,
-        bytesPerSample: 2
+        sampleRate: this.SAMPLE_RATE,
+        numberChannels: this.CHANNELS,
+        bytesPerSample: this.SAMPLE_SIZE_BITS / 8
       }
     });
 
     this.mediaRecorder.ondataavailable = (e) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const audioBlob = reader.result as string;
+        const audioBlob = (reader.result as string).split(',')[1];
         console.log(audioBlob);
         const audioType = audioMimeToExtension.get(this.mediaRecorder?.mimeType);
         if (audioType == undefined)
