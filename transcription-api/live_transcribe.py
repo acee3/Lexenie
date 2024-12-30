@@ -13,6 +13,7 @@ import soundfile as sf
 import torchaudio
 import base64
 import io
+import wave
 
 PORT = 5000
 SAMPLE_RATE = 16000
@@ -43,9 +44,14 @@ def vad_segment():
     print("DECODED AUDIO")
     original_sample_rate = data["sample_rate"]
     print("PARSED INPUTS")
-    with tempfile.NamedTemporaryFile(suffix='.wav') as f:
-        f.write(audio_buffer)
+    with tempfile.NamedTemporaryFile(suffix='.wav') as f, wave.open(f.name, 'wb') as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(original_sample_rate)
+        wf.writeframes(audio_buffer)
+        # f.write(audio_buffer)
         
+        print("Texts: ", (model.transcribe(f.name))['text'])
         if original_sample_rate != SAMPLE_RATE:
             y, old_sr = librosa.load(f.name)
             y_resampled = librosa.resample(y, orig_sr=old_sr, target_sr=SAMPLE_RATE)

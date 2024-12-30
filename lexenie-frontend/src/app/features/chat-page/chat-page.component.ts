@@ -8,6 +8,8 @@ import { Router } from '@angular/router';
 import { ModalComponent } from '../../shared/components/modal/modal.component';
 import { AuthService } from '../../core/auth.service';
 import { sample } from 'rxjs';
+import { MediaRecorder, register } from 'extendable-media-recorder';
+import { connect } from 'extendable-media-recorder-wav-encoder';
 
 
 @Component({
@@ -174,9 +176,10 @@ export class ChatPageComponent {
       return;
     }
     if (this.mediaRecorder == null) {
+      await register(await connect());
       const constraints = { sampleRate: this.SAMPLE_RATE, channelCount: this.CHANNELS, sampleSize: this.SAMPLE_SIZE_BITS };
       const stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
-      this.mediaRecorder = new MediaRecorder(stream);
+      this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/wav' }) as unknown as MediaRecorder;
     }
     
     if (this.isRecording) {
@@ -184,14 +187,6 @@ export class ChatPageComponent {
       this.isRecording = false;
       return;
     }
-
-    // this.messages.push({
-    //   messageId: this.tempMessageId,
-    //   conversationId: this.selectedConversation.conversationId,
-    //   userId: this.authService.getUserId(),
-    //   messageText: "...",
-    //   createdAt: new Date(),
-    // });
 
     this.chatService.startRecording({
       conversationId: this.selectedConversation.conversationId,
@@ -205,8 +200,7 @@ export class ChatPageComponent {
     this.mediaRecorder.ondataavailable = (e) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const audioBlob = (reader.result as string).split(',')[1];
-        console.log(audioBlob);
+        const audioBlob = (reader.result as string).split(',')[1].substring(4);
         const audioType = audioMimeToExtension.get(this.mediaRecorder?.mimeType);
         if (audioType == undefined)
           throw new Error('Unknown audio type');
@@ -223,15 +217,6 @@ export class ChatPageComponent {
             throw new Error('Error sending audio chunk');
           }
         });
-        // this.chatService.processFullAudio(this.selectedConversation.conversationId, audioBlob, audioType).subscribe({
-        //   next: (messagePair) => {
-        //     this.messages[this.messages.length - 1] = messagePair.inputMessage;
-        //     this.messages.push(messagePair.outputMessage);
-        //   },
-        //   error: (_) => {
-        //     throw new Error('Error retrieving messages');
-        //   }
-        // });
       }
       
       reader.readAsDataURL(e.data);

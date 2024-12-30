@@ -71,7 +71,6 @@ async function transcribeBase64(base64: string, extension: string) {
 
 async function segmentAudioBase64(base64: string, sampleRate: number) {
   try {
-    console.log("\n\nBASE64: ", base64);
     const response = await fetch(`${hostedModelURL}/vad-segment`, {
       method: "POST",
       headers: {
