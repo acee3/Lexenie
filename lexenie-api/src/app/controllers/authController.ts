@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express';
-import { botResponse, query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, generateToken, expiresIn, insertQuery } from '../index.js';
+import { query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, insertQuery } from '../index.js';
 import { BackendError, UnknownError, ConflictError, UnauthorizedError, NotFoundError } from '../lib/errors.js';
 import { CountData, UserData } from '../lib/types.js';
 import bcrypt from 'bcrypt';
+import { generateToken, expiresIn } from '../setup/authSetup.js';
 
 const createUser = async (req: Request, res: Response, next: NextFunction) => {
   const username: string = req.body.username;

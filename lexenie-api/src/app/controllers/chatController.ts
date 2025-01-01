@@ -1,13 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
-import { botResponse, transcribe, transcribeBase64, query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, insertQuery } from '../index.js';
+import { query, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, insertQuery } from '../index.js';
 import { LanguageData, MessageData, CountData, Language, OutputMessage, IdData, ConversationData, OutputConversation, OutputError } from '../lib/types.js';
 import { AudioChunkSentBeforeStartRecordingError, AudioNotRecordedError, BackendError, DeletedFileDoesNotExistError, QueryError, UnknownError } from '../lib/errors.js';
 import { Socket } from 'socket.io';
 import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from '../setup/websocket.js';
+import { botResponse, combineAudioBase64, segmentAudioBase64, transcribeBase64 } from '../setup/modelSetup.js';
 import path from 'path';
 import fs from 'fs';
-import { Readable } from 'stream';
-import { segmentAudioBase64 } from '../setup/modelSetup.js';
 
 const createConversation = async (req: Request, res: Response, next: NextFunction) => {
   const userId: number = req.body.userId;
@@ -122,22 +121,30 @@ const receiveAudioChunk = async (socket: Socket<ClientToServerEvents, ServerToCl
       if (conversationExists[0].count == 0) 
         throw new QueryError("Conversation ID does not exist in database");
 
-      const bytesPerSample = socket.data.audioChunks.waveData.bytesPerSample, 
-            sampleRate = socket.data.audioChunks.waveData.sampleRate, 
-            numberChannels = socket.data.audioChunks.waveData.numberChannels;
-      if (bytesPerSample == null || sampleRate == null || numberChannels == null)
+      const waveData = socket.data.audioChunks.waveData;
+      if (waveData == null)
         throw new AudioChunkSentBeforeStartRecordingError("Audio chunk sent before wave data was set.");
 
       socket.data.audioChunks.chunks.push(audioChunk);
 
-      const segments = await segmentAudioBase64(audioChunk, sampleRate);
-      if (segments.length > 0) {
-        const prevAudioChunk = socket.data.audioChunks.prevAudioChunk;
+      const segments = await segmentAudioBase64(audioChunk, waveData);
+
+      // console.log(segments.length);
+      // for (let i = 0; i < segments.length; i++)
+      //   console.log(segments[i].length);
+      // console.log("\n");
+
+      if (segments.length == 0) {
+        callback("");
+        return;
+      }
+      const prevAudioChunk = socket.data.audioChunks.prevAudioChunk;
+      segments.unshift(prevAudioChunk);
+      if (segments.length > 1) {
         socket.data.audioChunks.prevAudioChunk = segments[segments.length - 1];
         segments.pop();
-        segments.unshift(prevAudioChunk);
       }
-      const combinedSegments = segments.join('');
+      const combinedSegments = combineAudioBase64(segments);
       const chunkText = await transcribeBase64(combinedSegments, "wav");
       
       callback(chunkText);
@@ -173,7 +180,7 @@ const stopRecording = async (socket: Socket<ClientToServerEvents, ServerToClient
       // fs.writeFileSync(localFilePath, buffer);
       
       // const messageText: string = await transcribe(localFilePath);
-      socket.data.audioChunks = {waveData: {sampleRate: null, numberChannels: null, bytesPerSample: null}, chunks: [] as string[], prevAudioChunk: ''};  // Reset for new recording to be started
+      socket.data.audioChunks = {waveData: null, chunks: [] as string[], prevAudioChunk: ''};  // Reset for new recording to be started
 
       // callback(messageText);
 

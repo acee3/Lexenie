@@ -200,12 +200,10 @@ function isServerError(response: any): response is ServerError {
          (response as ServerError).status !== undefined;
 }
 
-export type Option<T> = T | null;
-
 export interface WaveData {
-  sampleRate: Option<number>;
-  numberChannels: Option<number>;
-  bytesPerSample: Option<number>;
+  sampleRate: number;
+  numberChannels: number;
+  bytesPerSample: number;
 }
 
 export interface StartRecordingData {

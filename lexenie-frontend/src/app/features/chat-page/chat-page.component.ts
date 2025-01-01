@@ -26,8 +26,7 @@ export class ChatPageComponent {
       this.chatService.connectErrorObservable().subscribe({
         next: (error) => {
           console.error(error);
-          this.authService.logout();
-          this.router.navigate(['/auth/login']);
+          this.logout();
         }
       });
 
@@ -36,8 +35,7 @@ export class ChatPageComponent {
           console.warn(error);
           if (error.name === 'UnknownError') {
             console.error('Unknown error');
-            this.authService.logout();
-            this.router.navigate(['/auth/login']);
+            this.logout();
           }
         }
       });
@@ -45,8 +43,7 @@ export class ChatPageComponent {
       this.chatService.disconnectObservable().subscribe({
         next: (reason) => {
           console.warn('Socket disconnected:', reason);
-          this.authService.logout();
-          this.router.navigate(['/auth/login']);
+          this.logout();
         }
       });
 
@@ -60,7 +57,6 @@ export class ChatPageComponent {
           this.selectedConversation = this.conversations[0];
           console.log(this.selectedConversation.name);
           this.retrieveMessages(this.selectedConversation);
-          console.log
         },
         error: (err) => {
           throw new Error('Error getting conversations');
@@ -68,12 +64,16 @@ export class ChatPageComponent {
       });
     } catch (e) {
       console.error(e);
-      this.router.navigate(['/auth/login']);
+      this.logout();
     }
   }
 
   logout() {
     this.authService.logout();
+    if (this.mediaRecorder != null) {
+      this.mediaRecorder.stop();
+      this.isRecording = false;
+    }
     this.router.navigate(['/auth/login']);
   }
 
@@ -160,10 +160,8 @@ export class ChatPageComponent {
   tempMessageId: number = -1;
 
   isRecording: boolean = false;
+  stream: MediaStream | null = null;
   mediaRecorder: MediaRecorder | null = null;
-  SAMPLE_RATE = 16000;
-  CHANNELS = 1;
-  SAMPLE_SIZE_BITS = 16;
 
   async handleRecord() {
     if (this.selectedConversation == null) {
@@ -175,11 +173,10 @@ export class ChatPageComponent {
       alert('Recording audio is not supported in this browser.');
       return;
     }
-    if (this.mediaRecorder == null) {
+    if (this.mediaRecorder == null || this.stream == null) {
       await register(await connect());
-      const constraints = { sampleRate: this.SAMPLE_RATE, channelCount: this.CHANNELS, sampleSize: this.SAMPLE_SIZE_BITS };
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: constraints });
-      this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/wav' }) as unknown as MediaRecorder;
+      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.mediaRecorder = new MediaRecorder(this.stream, { mimeType: 'audio/wav' }) as unknown as MediaRecorder;
     }
     
     if (this.isRecording) {
@@ -188,19 +185,27 @@ export class ChatPageComponent {
       return;
     }
 
+    const settings = this.stream?.getAudioTracks()[0].getSettings();
+    const { sampleRate, channelCount, sampleSize } = settings;
+    if (sampleRate == undefined || channelCount == undefined || sampleSize == undefined) {
+      alert('Error getting audio settings');
+      return;
+    }
+    const sampleSizeInBytes = sampleSize / 8;
+    
     this.chatService.startRecording({
       conversationId: this.selectedConversation.conversationId,
       waveData: {
-        sampleRate: this.SAMPLE_RATE,
-        numberChannels: this.CHANNELS,
-        bytesPerSample: this.SAMPLE_SIZE_BITS / 8
+        sampleRate: sampleRate,
+        numberChannels: channelCount,
+        bytesPerSample: sampleSizeInBytes
       }
     });
 
     this.mediaRecorder.ondataavailable = (e) => {
       const reader = new FileReader();
       reader.onload = () => {
-        const audioBlob = (reader.result as string).split(',')[1].substring(4);
+        const audioBlob = (reader.result as string).split(',')[1];
         const audioType = audioMimeToExtension.get(this.mediaRecorder?.mimeType);
         if (audioType == undefined)
           throw new Error('Unknown audio type');

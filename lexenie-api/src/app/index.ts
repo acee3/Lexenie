@@ -1,12 +1,10 @@
 import express from 'express';
 import getChatRouter from './routes/chatRoutes.js';
 import Database from './setup/databaseSetup.js';
-import { botResponse, transcribe, transcribeBase64, segmentAudioBase64 } from './setup/modelSetup.js';
 import createWebsocket from './setup/websocket.js';
 import { createServer } from 'http';
 import cors from 'cors';
 import session from 'express-session';
-import { generateToken, verifyToken, expiresIn } from './setup/authSetup.js';
 
 import { CountData } from './lib/types.js';
 import getAuthRouter from './routes/authRoutes.js';
@@ -37,5 +35,5 @@ app.use('/auth', authRoute);
 
 app.use(handleErrors);
 
-export { io, botResponse, transcribe, transcribeBase64, query, insertQuery, generateToken, verifyToken, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID, expiresIn };
+export { io, query, insertQuery, CONVERSATION_TABLE_NAME, MESSAGE_TABLE_NAME, USER_TABLE_NAME, BOT_USER_ID };
 export default httpServer;

@@ -12,7 +12,7 @@ export default async function getChatRouter() {
   io.use(authorizeTokenWebsocket)
   .on("connection", (socket) => {
     socket.data.audioChunks = {
-      waveData: {sampleRate: null, numberChannels: null, bytesPerSample: null}, 
+      waveData: null, 
       chunks: [] as string[],
       prevAudioChunk: ''
     };

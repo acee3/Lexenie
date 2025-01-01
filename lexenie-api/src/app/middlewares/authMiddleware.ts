@@ -1,10 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { BackendError, NotFoundError, UnauthorizedError, UnknownError } from '../lib/errors.js';
-import { OutputError, UserData } from '../lib/types.js';
-import { query, verifyToken, USER_TABLE_NAME } from '../index.js';
+import { UserData } from '../lib/types.js';
+import { query, USER_TABLE_NAME } from '../index.js';
 import { Socket } from 'socket.io';
 import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from '../setup/websocket.js';
-import { ExtendedError } from 'socket.io/dist/namespace.js';
+import { verifyToken } from '../setup/authSetup.js';
 
 const authorizeToken = async (req: Request, res: Response, next: NextFunction) => {
   try {

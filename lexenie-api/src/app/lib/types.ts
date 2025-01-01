@@ -17,9 +17,9 @@ export { Language, Option };
 
 // CLIENT TYPES
 interface WaveData {
-  sampleRate: Option<number>;
-  numberChannels: Option<number>;
-  bytesPerSample: Option<number>;
+  sampleRate: number;
+  numberChannels: number;
+  bytesPerSample: number;
 }
 
 interface StartRecordingData {
@@ -28,7 +28,7 @@ interface StartRecordingData {
 }
 
 interface WaveChunks {
-  waveData: WaveData;
+  waveData: Option<WaveData>;
   chunks: string[];
   prevAudioChunk: string;
 }
