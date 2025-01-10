@@ -207,6 +207,7 @@ export class ChatPageComponent {
       reader.onload = () => {
         const audioBlob = (reader.result as string).split(',')[1];
         const audioType = audioMimeToExtension.get(this.mediaRecorder?.mimeType);
+
         if (audioType == undefined)
           throw new Error('Unknown audio type');
         
@@ -228,7 +229,7 @@ export class ChatPageComponent {
     };
 
     // Send audio chunks every 1s
-    this.mediaRecorder.start(1000);
+    this.mediaRecorder.start(5000);
     this.isRecording = true;
   }
 

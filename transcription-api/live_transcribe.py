@@ -56,8 +56,9 @@ def vad_segment():
         boundaries = VAD.get_speech_segments(
             f.name, 
             apply_energy_VAD=True, 
-            close_th=0.025, 
-            len_th=0.1
+            # These parameters can be used if more fine-grained control is needed
+            # close_th=0.025, 
+            # len_th=0.1
         )
         segments = VAD.get_segments(
             boundaries,

@@ -129,10 +129,11 @@ const receiveAudioChunk = async (socket: Socket<ClientToServerEvents, ServerToCl
 
       const segments = await segmentAudioBase64(audioChunk, waveData);
 
-      // console.log(segments.length);
-      // for (let i = 0; i < segments.length; i++)
-      //   console.log(segments[i].length);
-      // console.log("\n");
+      console.log(audioChunk.length);
+      console.log(segments.length);
+      for (let i = 0; i < segments.length; i++)
+        console.log(segments[i].length);
+      console.log("\n");
 
       if (segments.length == 0) {
         callback("");
