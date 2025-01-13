@@ -4,7 +4,7 @@ import { LanguageData, MessageData, CountData, Language, OutputMessage, IdData, 
 import { AudioChunkSentBeforeStartRecordingError, AudioNotRecordedError, BackendError, DeletedFileDoesNotExistError, QueryError, UnknownError } from '../lib/errors.js';
 import { Socket } from 'socket.io';
 import { ClientToServerEvents, ServerToClientEvents, InterServerEvents, SocketData } from '../setup/websocket.js';
-import { botResponse, combineAudioBase64, segmentAudioBase64, transcribeBase64 } from '../setup/modelSetup.js';
+import { botResponse, combineAudioBase64, segmentAudioBase64, transcribeBase64, transcribeBuffer } from '../setup/modelSetup.js';
 import path from 'path';
 import fs from 'fs';
 
@@ -125,28 +125,30 @@ const receiveAudioChunk = async (socket: Socket<ClientToServerEvents, ServerToCl
       if (waveData == null)
         throw new AudioChunkSentBeforeStartRecordingError("Audio chunk sent before wave data was set.");
 
-      socket.data.audioChunks.chunks.push(audioChunk);
-
       const segments = await segmentAudioBase64(audioChunk, waveData);
 
-      console.log(audioChunk.length);
-      console.log(segments.length);
-      for (let i = 0; i < segments.length; i++)
-        console.log(segments[i].length);
-      console.log("\n");
+      // console.log(audioChunk.length);
+      // console.log(segments.length);
+      // for (let i = 0; i < segments.length; i++)
+      //   console.log(segments[i].length);
+      // console.log("\n");
 
       if (segments.length == 0) {
         callback("");
         return;
       }
-      const prevAudioChunk = socket.data.audioChunks.prevAudioChunk;
-      segments.unshift(prevAudioChunk);
+      let newBuffer = null;
       if (segments.length > 1) {
-        socket.data.audioChunks.prevAudioChunk = segments[segments.length - 1];
+        newBuffer = Buffer.from(segments[segments.length - 1], 'base64');
         segments.pop();
       }
-      const combinedSegments = combineAudioBase64(segments);
-      const chunkText = await transcribeBase64(combinedSegments, "wav");
+      const combinedSegments = combineAudioBase64(socket.data.audioChunks.chunks, segments);
+      if (combinedSegments == null) {
+        callback("");
+        return;
+      }
+      socket.data.audioChunks.chunks = newBuffer;
+      const chunkText = await transcribeBuffer(combinedSegments, "wav");
       
       callback(chunkText);
     } catch (error) {
@@ -181,7 +183,7 @@ const stopRecording = async (socket: Socket<ClientToServerEvents, ServerToClient
       // fs.writeFileSync(localFilePath, buffer);
       
       // const messageText: string = await transcribe(localFilePath);
-      socket.data.audioChunks = {waveData: null, chunks: [] as string[], prevAudioChunk: ''};  // Reset for new recording to be started
+      socket.data.audioChunks = {waveData: null, chunks: null};  // Reset for new recording to be started
 
       // callback(messageText);
 

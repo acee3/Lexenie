@@ -13,8 +13,7 @@ export default async function getChatRouter() {
   .on("connection", (socket) => {
     socket.data.audioChunks = {
       waveData: null, 
-      chunks: [] as string[],
-      prevAudioChunk: ''
+      chunks: null
     };
     socket.data.conversationBatchNumber = 0;
     socket.data.currentConversationId = null;

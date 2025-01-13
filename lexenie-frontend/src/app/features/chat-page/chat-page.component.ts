@@ -104,9 +104,11 @@ export class ChatPageComponent {
   openConversationModal() {
     this.isConversationModalVisible = true;
   }
+  
   newConversationName: string = '';
   newConversationLanguage: Language = 'English';
   languages: string[] = ["English", "Spanish", "French", "German", "Italian", "Mandarin", "Cantonese", "Japanese"];
+  
   createConversation() {
     if (this.newConversationName.trim() && this.newConversationLanguage.trim()) {
       this.chatService.createConversation(this.newConversationName, this.newConversationLanguage).subscribe({

@@ -31,9 +31,11 @@ async function botResponse(language: string, prevMessages: MessageData[], messag
   }
 }
 
-async function transcribe(filepath: string) {
+async function transcribe(file: string | ReadStream) {
+  if (typeof file === 'string')
+    file = fs.createReadStream(file);
   const transcription = await openai.audio.transcriptions.create({
-    file: fs.createReadStream(filepath),
+    file: file,
     model: "whisper-1",
   });
   return transcription.text;
@@ -64,11 +66,21 @@ function base64ToReadStream(base64: string, filename: string): ReadStream {
 async function transcribeBase64(base64: string, extension: string) {
   try {
     const stream = base64ToReadStream(base64, `recording_${Date.now()}.${extension}`);
-    const transcription = await openai.audio.transcriptions.create({
-      file: stream,
-      model: "whisper-1",
-    });
-    return transcription.text;
+    return transcribe(stream);
+  } catch (error) {
+    if (!(error instanceof Error)) throw new UnknownError();
+    throw new BotResponseError(error.message);
+  }
+}
+
+async function transcribeBuffer(buffer: Buffer, extension: string) {
+  try {
+    const tmpDir = tmpdir();
+    const audioDir = mkdtempSync(tmpDir);
+    const audioPath = audioDir + `recording_${Date.now()}.${extension}`;
+    writeFileSync(audioPath, buffer);
+
+    return transcribe(audioPath);
   } catch (error) {
     if (!(error instanceof Error)) throw new UnknownError();
     throw new BotResponseError(error.message);
@@ -97,14 +109,30 @@ async function segmentAudioBase64(base64: string, waveData: WaveData) {
   }
 }
 
-function combineAudioBase64(segments: string[]) {
-  if (segments.length == 0)
-    throw new BotResponseError("No audio segments to combine");
+function combineAudioBase64(buffer: Buffer | null, audioChunks: string[]) {
+  let existingBuffer = buffer;
+  if (audioChunks.length == 0)
+    return existingBuffer;
+  if (existingBuffer === null)
+    existingBuffer = Buffer.from(audioChunks[0], 'base64');
+  else if (existingBuffer.length < 44)
+    throw new BotResponseError('Existing buffer is too small or not a valid 44-byte header WAV.');
   
-  // Remove the wav file headers from every segment except first to prevent duplicates RIFFs
-  segments = segments.map((segment, idx) => idx == 0 ? segment : segment.substring(4));
-  
-  return segments.join("");
+  let riffSize = existingBuffer.readUInt32LE(4);
+  let dataSize = existingBuffer.readUInt32LE(40);
+
+  const toAddBuffers: Buffer[] = []
+  for (const chunk of audioChunks) {
+    const chunkBuffer = Buffer.from(chunk, 'base64').subarray(44);
+    toAddBuffers.push(chunkBuffer);
+    riffSize += chunkBuffer.length;
+    dataSize += chunkBuffer.length;
+  }
+  existingBuffer.writeUInt32LE(riffSize, 4);
+  existingBuffer.writeUInt32LE(dataSize, 40);
+  toAddBuffers.unshift(existingBuffer);
+
+  return Buffer.concat(toAddBuffers);
 }
 
-export { botResponse, transcribe, transcribeBase64, segmentAudioBase64, combineAudioBase64 }
+export { botResponse, transcribe, transcribeBase64, transcribeBuffer, segmentAudioBase64, combineAudioBase64 }

@@ -29,8 +29,7 @@ interface StartRecordingData {
 
 interface WaveChunks {
   waveData: Option<WaveData>;
-  chunks: string[];
-  prevAudioChunk: string;
+  chunks: Buffer | null;
 }
 
 interface OutputConversation {
