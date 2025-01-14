@@ -64,8 +64,12 @@ def vad_segment():
             boundaries,
             f.name
         )
-        segments = list(map(tensor_to_base64, segments))
-    return {"segments": segments}
+        ans = [{
+            "segment": tensor_to_base64(segment), 
+            "start": boundaries[i].item(), 
+            "end": boundaries[i+1].item()
+        } for i, segment in enumerate(segments)]
+    return {"segments": ans}
 
 
 @app.post("/transcribe")

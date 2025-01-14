@@ -107,3 +107,13 @@ interface OutputError {
 }
 
 export { OutputError };
+
+
+// MODEL TYPE
+interface SegmentData {
+  segment: string;
+  start: number;
+  end: number;
+}
+
+export { SegmentData };
