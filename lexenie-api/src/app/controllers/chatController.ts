@@ -125,7 +125,9 @@ const receiveAudioChunk = async (socket: Socket<ClientToServerEvents, ServerToCl
       if (waveData == null)
         throw new AudioChunkSentBeforeStartRecordingError("Audio chunk sent before wave data was set.");
       
-      const segmentData = await segmentAudioBase64(audioChunk, waveData);
+      const segmentedAudio = await segmentAudioBase64(audioChunk, waveData);
+      const segmentData = segmentedAudio.segments;
+      const fullDuration = segmentedAudio.duration;
 
       // console.log(audioChunk.length);
       // console.log(segmentData.length);
@@ -141,12 +143,24 @@ const receiveAudioChunk = async (socket: Socket<ClientToServerEvents, ServerToCl
           callback("");
         return;
       }
-
+      
       let newBuffer = null;
       if (segmentData.length > 1) {
         newBuffer = Buffer.from(segmentData[segmentData.length - 1].segment, 'base64');
         segmentData.pop();
-      } 
+        socket.data.audioChunks.chunks = Buffer.from(segmentData[0].segment, 'base64');
+      } else if (segmentData.length == 1 && 
+                 segmentData[0].start < 0.5 &&
+                 segmentData[0].end > fullDuration - 0.5) { 
+        if (socket.data.audioChunks.chunks == null) {
+          socket.data.audioChunks.chunks = Buffer.from(segmentData[0].segment, 'base64');
+          callback("");
+          return;
+        }
+        socket.data.audioChunks.chunks = combineAudioBase64(socket.data.audioChunks.chunks, [segmentData[0].segment]);
+        callback("");
+        return;
+      }
 
       const segments = segmentData.map(segment => segment.segment);
       const combinedSegments = combineAudioBase64(socket.data.audioChunks.chunks, segments);

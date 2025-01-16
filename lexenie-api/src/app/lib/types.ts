@@ -116,4 +116,9 @@ interface SegmentData {
   end: number;
 }
 
-export { SegmentData };
+interface SegmentedAudio {
+  segments: SegmentData[];
+  duration: number;
+}
+
+export { SegmentData, SegmentedAudio };

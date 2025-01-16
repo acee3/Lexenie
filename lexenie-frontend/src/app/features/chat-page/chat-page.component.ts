@@ -230,7 +230,7 @@ export class ChatPageComponent {
       reader.readAsDataURL(e.data);
     };
 
-    // Send audio chunks every 1s
+    // Send audio chunks every 5s
     this.mediaRecorder.start(5000);
     this.isRecording = true;
   }

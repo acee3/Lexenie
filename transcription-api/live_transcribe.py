@@ -53,6 +53,8 @@ def vad_segment():
             y_resampled = librosa.resample(y, orig_sr=old_sr, target_sr=SAMPLE_RATE)
             sf.write(f.name, y_resampled, SAMPLE_RATE)
         
+        full_duration = librosa.get_duration(filename=f.name)
+        
         boundaries = VAD.get_speech_segments(
             f.name, 
             apply_energy_VAD=True, 
@@ -69,7 +71,7 @@ def vad_segment():
             "start": boundaries[i].item(), 
             "end": boundaries[i+1].item()
         } for i, segment in enumerate(segments)]
-    return {"segments": ans}
+    return {"segments": ans, "duration": full_duration}
 
 
 @app.post("/transcribe")

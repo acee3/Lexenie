@@ -1,4 +1,4 @@
-import { MessageData, SegmentData, WaveData } from "../lib/types.js";
+import { MessageData, SegmentData, SegmentedAudio, WaveData } from "../lib/types.js";
 import dotenv from 'dotenv';
 dotenv.config();
 import OpenAI from "openai";
@@ -101,7 +101,7 @@ async function segmentAudioBase64(base64: string, waveData: WaveData) {
         "sampwidth": waveData.bytesPerSample,
       }),
     });
-    const json = (await response.json()) as { segments: SegmentData[] };
+    const json = (await response.json()) as { segments: SegmentedAudio };
     return json.segments;
   } catch (error) {
     if (!(error instanceof Error)) throw new UnknownError();
